@@ -1,15 +1,16 @@
 // implementation of the riscV register file
 // 32 general purpose registers each with 32 bits
 
-module reg_file ( clk , reset_n , readReg1 , readReg2 , writeReg1 , writeRegData , writeData , dataRead1 , dataRead2 );
+module reg_file  #(parameter address_width = 5, parameter register_size = 32 ) 
+        ( clk , reset_n , readReg1 , readReg2 , writeReg1 , writeRegData , writeData , dataRead1 , dataRead2 );
 
 input clk , reset_n , writeData;
-input [4:0] readReg1 , readReg2 , writeReg1 ; // select the registers we want 
-input [31:0] writeRegData;
+input [address_width-1:0] readReg1 , readReg2 , writeReg1 ; // select the registers we want 
+input [register_size-1:0] writeRegData;
 
-output reg [31:0] dataRead1 , dataRead2 ;
+output reg [register_size-1:0] dataRead1 , dataRead2 ;
 
-reg [31:0] registerFile [31:0];
+reg [register_size-1:0] registerFile [2**address_width-1:0];
 
 integer  i;
 always @( posedge clk or negedge reset_n )
@@ -19,9 +20,9 @@ begin
         dataRead1 = 0;
         dataRead2 = 0;
 
-        for ( i = 0 ; i < 32 ; i=i+1)
+        for ( i = 0 ; i < 2**address_width ; i=i+1)
         begin
-            registerFile[i] = 32'b0;
+            registerFile[i] = 0;
         end
     end
 

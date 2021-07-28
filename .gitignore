@@ -1,5 +1,5 @@
-.idea
 examples
 /single-cycle-riscV-subset/cmake-build-debug/
 /.vscode/
 /single-cycle-riscV-subset/logs/
+/single-cycle-riscV-subset/build/

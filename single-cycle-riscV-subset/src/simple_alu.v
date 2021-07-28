@@ -3,11 +3,11 @@ module simple_alu ( clk , control , operand1 , operand2 , result  );
 
 input clk;
 input [3:0] control;
-input signed [31:0] operand1 , operand2;
+input signed [31:0] operand1 , operand2 /*verilator public*/;
 
 output reg [31:0] result /*verilator public*/ ;
 
-always@ ( control )
+always@ (control)
 begin
     result = 0;
 
