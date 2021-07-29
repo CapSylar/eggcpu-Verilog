@@ -1,21 +1,19 @@
-
-
 template<class MODULE>
-class TESTBENCH
+class TestBench
 {
 public:
 	unsigned long m_tickcount = 0;
 	MODULE	*m_core = nullptr ;
     VerilatedVcdC* m_trace = nullptr;
 
-	TESTBENCH()
+	TestBench()
     {
 		m_core = new MODULE;
         // for tracing with vcd file
         Verilated::traceEverOn(true);
 	}
 
-	virtual ~TESTBENCH(void)
+	virtual ~TestBench()
     {
 		delete m_core;
 	}
@@ -27,7 +25,7 @@ public:
 	// 	m_core->i_reset = 0;
 	// }
 
-	virtual void tick(void)
+	virtual void tick()
     {
 		// Increment our own internal time reference
 		m_tickcount++;
@@ -69,7 +67,7 @@ public:
 	}
 
 	// Close a trace file
-	virtual void close(void)
+	virtual void close()
     {
 		if (m_trace)
         {
@@ -78,5 +76,5 @@ public:
 		}
 	}
 
-	virtual bool done(void) { return (Verilated::gotFinish()); }
+	virtual bool done() { return (Verilated::gotFinish()); }
 };

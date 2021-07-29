@@ -4,24 +4,16 @@
 class dataMem
 {   
 public:
-    dataMem() : mem( new uint32_t[1000] ) {}
-
-    ~dataMem()
-    {
-        delete mem;
-    }
-
     void writeMem( uint32_t address , uint32_t value )   
     {
-        mem[address] = value;
+        mem[address >> 2] = value;
     }
 
     uint8_t readMem ( uint32_t address ) const
     {
-        return mem[address];
+        return mem[address >> 2];
     }
 
 private:
-
-    uint32_t *mem = nullptr ;
+    uint32_t mem[1000] = {0} ;
 };

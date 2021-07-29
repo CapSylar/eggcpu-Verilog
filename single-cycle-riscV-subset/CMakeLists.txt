@@ -27,8 +27,10 @@ if (NOT verilator_FOUND)
   message(FATAL_ERROR "Verilator was not found. Either install it, or set the VERILATOR_ROOT environment variable")
 endif()
 
+include_directories(../ELFIO)
+
 # Create a new executable target that will contain all your sources
-add_executable(robin_test main.cpp)
+add_executable(robin_test main.cpp instructionMem.cpp )
 
 # Add the Verilated circuit to the target
 verilate(robin_test COVERAGE TRACE

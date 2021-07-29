@@ -10,7 +10,7 @@ input [register_size-1:0] writeRegData;
 
 output reg [register_size-1:0] dataRead1 , dataRead2 ;
 
-reg [register_size-1:0] registerFile [2**address_width-1:0];
+reg [register_size-1:0]  registerFile  [2**address_width-1:0] /*verilator public*/;
 
 integer  i;
 always @( posedge clk or negedge reset_n )

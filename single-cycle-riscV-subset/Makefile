@@ -44,6 +44,11 @@ endif
 
 default: $(TARGET)
 
+trace: default
+	@echo
+	@echo opening trace file in logs/vlt_dump.vcd
+	gtkwave logs/vlt_dump.vcd &
+
 run:
 	@echo
 	@echo "-- Verilator CMake tracing example"
@@ -61,18 +66,11 @@ run:
 	@mkdir -p logs
 	build/robin_test +trace
 
-	@echo
-	@echo "-- COVERAGE ----------------"
+#   @echo
+#	@echo "-- COVERAGE ----------------"
 # $(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
 
-	@echo
 	@echo "-- DONE --------------------"
-	@echo "To see waveforms, open vlt_dump.vcd in a waveform viewer"
-	@echo
-
-# for the lolz, launch gtkwave
-
-	gtkwave logs/vlt_dump.vcd &
 
 clean mostlyclean distclean maintainer-clean:
 	@rm -rf build logs
