@@ -12,7 +12,6 @@ public:
         // for tracing with vcd file
         Verilated::traceEverOn(true);
 	}
-
 	virtual ~TestBench()
     {
 		delete m_core;

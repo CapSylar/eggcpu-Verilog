@@ -1,7 +1,7 @@
 module top_tb
 #
 (
-    parameter PROGRAM_FILE = "testbench/test-program.mem"
+    parameter PROGRAM_FILE = "test-programs/test-program.mem"
 )
 (
     input wire clk,
