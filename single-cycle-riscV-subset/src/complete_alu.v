@@ -1,19 +1,21 @@
-module complete_alu( clk , aluSrc , aluOper , instructionw , readRegister1 , readregister2 , isZero , arithResult ,
+module complete_alu( aluSrc , aluOper , instructionw , readRegister1 , readregister2 , isZero , arithResult ,
         extendedImmediate );
 
-input clk , aluSrc ; // aluSrc = 0, use register2 else use immediate
+input aluSrc ; // aluSrc = 0, use register2 else use immediate
 input [1:0] aluOper ; // alu operation line from control 
 input [31:0] instructionw , readRegister1 , readregister2;
 output [31:0] arithResult;
 output reg [31:0] extendedImmediate; // sign extended immediate
-output isZero = (arithResult == 0) ; 
+output wire isZero ; 
+
+assign isZero = (arithResult == 32'b0);
 
 wire [2:0] func3 = instructionw[14:12];
 wire [6:0] func7 = instructionw[31:25];
 wire [6:0] opcode = instructionw[6:0];
 reg [3:0] aluControl ;
 
-simple_alu instanciated_alu ( .clk(clk) , .control(aluControl) , .operand1(readRegister1) ,
+simple_alu instanciated_alu (  .control(aluControl) , .operand1(readRegister1) ,
 .operand2(aluSrc ? extendedImmediate : readregister2 ) , .result(arithResult) );
 
 //decode the immediate

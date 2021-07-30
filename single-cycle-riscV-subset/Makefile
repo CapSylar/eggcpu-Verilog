@@ -64,7 +64,7 @@ run:
 	@echo
 	@echo "-- RUN ---------------------"
 	@mkdir -p logs
-	build/robin_test +trace
+	build/robin_test +trace -G PROGRAM_FILE="testbench/test-program.mem"
 
 #   @echo
 #	@echo "-- COVERAGE ----------------"

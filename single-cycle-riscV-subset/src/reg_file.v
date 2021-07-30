@@ -13,28 +13,29 @@ output reg [register_size-1:0] dataRead1 , dataRead2 ;
 reg [register_size-1:0]  registerFile  [2**address_width-1:0] /*verilator public*/;
 
 integer  i;
-always @( posedge clk or negedge reset_n )
+always @( posedge clk  )
 begin
     if ( !reset_n )
     begin
-        dataRead1 = 0;
-        dataRead2 = 0;
-
         for ( i = 0 ; i < 2**address_width ; i=i+1)
         begin
             registerFile[i] = 0;
         end
     end
 
-    else
+    else if ( writeData )  // write needed data
     begin
+        if ( writeReg1 != 0 ) // never write to x0, this it stays=0, not the cleanest way to do it
+            registerFile[writeReg1] <= writeRegData;
+    end
+end
+
+// read registers
+always@(*)
+begin
         // read registers
         dataRead1 = registerFile[readReg1];
         dataRead2 = registerFile[readReg2];
-
-        if ( writeData ) // write needed data
-            registerFile[writeReg1] <= writeRegData;
-    end
 end
 
 

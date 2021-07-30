@@ -30,9 +30,9 @@ endif()
 include_directories(../ELFIO)
 
 # Create a new executable target that will contain all your sources
-add_executable(robin_test main.cpp instructionMem.cpp )
+add_executable(robin_test main.cpp)
 
 # Add the Verilated circuit to the target
 verilate(robin_test COVERAGE TRACE
-  INCLUDE_DIRS "." "src"
-  SOURCES src/top_riscV.v )
+  INCLUDE_DIRS "." "src" "testbench"
+  SOURCES testbench/top_tb.v )
