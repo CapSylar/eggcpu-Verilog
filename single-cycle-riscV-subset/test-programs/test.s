@@ -1,16 +1,12 @@
 .text
 
-#simple test, ok=0 error=1
+#simple test, ok= exit code 2
 
 
-    li x2,100
-    li x3,100
-    li x4,100
-    li x5,100
-    li x6,100
-    li x7,100
+li x1,1000
+li x2,2000
 
-    
+sub x3, x1, x2
 
 # test:
 #     la x1,0
@@ -27,12 +23,12 @@
 #     beq x3,x4,end
 #     li x5,100
 
-#     # end of tests
-#     sw x0, 4(x0) 
+    # end of tests
+    li x1,2
+    sw x1, 4(x0) 
 
 end:
     li x2, 1
-    # sw x2, 4(x1) # exit code 1 try it
     sw x2, 0(x0)
     # simulation stops here ***********
 

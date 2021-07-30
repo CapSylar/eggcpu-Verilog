@@ -74,7 +74,7 @@ begin
                         aluControl = 2; // add
                 
                 10'b???1100011: // beq
-                        aluControl = 1 ; //sub
+                        aluControl = 3 ; //sub
                 
                 10'b0000010011: // addi
                         aluControl = 2;
@@ -89,7 +89,7 @@ begin
                         if ( func7 == 0 )
                                 aluControl = 2; // add
                         else
-                                aluControl = 1; // sub
+                                aluControl = 3; // sub
                 end
 
                 10'b1100110011: 

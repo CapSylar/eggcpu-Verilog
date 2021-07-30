@@ -47,7 +47,7 @@ public:
             std::cout << "module state before exiting\n" ;
             if ( writeOut ) dump_state() ; // dump a final time before exiting!
             // print exit status stored at location [1]
-            printf("exited with code %d\n" , m_core->top_tb->inst_data_memory->mem[4] );
+            printf("exited with code %d\n" , m_core->top_tb->inst_data_memory->mem[1] );
             return true;
         }
          

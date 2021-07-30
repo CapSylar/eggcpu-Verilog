@@ -11,6 +11,6 @@ convert.out: convert.cpp
 
 
 clean:
-	rm convert.out test-program.mem riscV.out
+	@rm convert.out test-program.mem riscV.out
 
 	
