@@ -1,0 +1,22 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Tue Aug  3 09:27:34 2021
+[*]
+[dumpfile] "/home/robin/Desktop/eggcpu/pipelined-riscV/tb_top_riscV.vcd"
+[dumpfile_mtime] "Tue Aug  3 09:27:12 2021"
+[dumpfile_size] 1046
+[savefile] "/home/robin/Desktop/eggcpu/pipelined-riscV/gtk_signals.gtkw"
+[timestart] 0
+[size] 1440 900
+[pos] -963 -14
+*-5.706180 5 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 289
+[signals_width] 114
+[sst_expanded] 1
+[sst_vpaned_height] 238
+@28
+tb_top_riscV.clk
+@29
+tb_top_riscV.reset_n
+[pattern_trace] 1
+[pattern_trace] 0
