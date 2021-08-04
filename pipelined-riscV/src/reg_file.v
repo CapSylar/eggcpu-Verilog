@@ -13,8 +13,12 @@ output reg [register_size-1:0] data1_o , data2_o ;
 reg [register_size-1:0]  registerFile  [2**address_width-1:0];
 
 integer  i;
-always @( posedge clk  )
+always @( posedge clk )
 begin
+    // reading happends at every posedge
+    data1_o = registerFile[reg1_addr_i];
+    data2_o = registerFile[reg2_addr_i];
+
     if ( !reset_n )
     begin
         for ( i = 0 ; i < 2**address_width ; i=i+1)
@@ -29,14 +33,5 @@ begin
             registerFile[writereg_addr_i] <= data_i;
     end
 end
-
-// read registers
-always@(*)
-begin
-        // read registers
-        data1_o = registerFile[reg1_addr_i];
-        data2_o = registerFile[reg2_addr_i];
-end
-
 
 endmodule

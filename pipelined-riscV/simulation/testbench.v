@@ -1,5 +1,5 @@
 module tb_top_riscV;
-parameter TEST_MEMORY_ADDR_WIDTH = 1024 ;
+parameter TEST_MEMORY_WIDTH = 10 ;
 
 reg clk;
 reg reset_n;
@@ -31,7 +31,7 @@ top_riscV uut
 );
 
 // Instruction and Data mmemory
-reg [31:0] ram [0:2**TEST_MEMORY_ADDR_WIDTH-1];
+reg [31:0] ram [0:2**TEST_MEMORY_WIDTH-1];
 
 // initial begin
 //     $readmemh( "hello.txt" , ram );
@@ -47,12 +47,12 @@ begin
     end
     else
     begin
-        IMEM_data_i <= ram[IMEM_addr_o[TEST_MEMORY_ADDR_WIDTH-1:0]]; // always read
+        IMEM_data_i <= ram[IMEM_addr_o[TEST_MEMORY_WIDTH-1:0]]; // always read
 
         if ( DMEM_write_o ) // write to ram 
-            ram[DMEM_addr_o[TEST_MEMORY_ADDR_WIDTH-1:0]] <= DMEM_data_o;
+            ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0]] <= DMEM_data_o;
         else if ( DMEM_read_o ) // read from ram
-            DMEM_data_i <= ram[DMEM_addr_o[TEST_MEMORY_ADDR_WIDTH-1:0]]; 
+            DMEM_data_i <= ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0]]; 
     end
 end
 
