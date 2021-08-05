@@ -1,11 +1,14 @@
-module tb_top_riscV;
+module tb_top_riscV
+#( parameter TEST_PROGRAM_PATH = "testing/custom-tests/test.hex" ) ;
+
 parameter TEST_MEMORY_WIDTH = 10 ;
+// parameter TEST_PROGRAM_PATH =  ; 
 
 reg clk;
 reg reset_n;
 
 // Internal wire definitions *****
-
+ 
 wire [31:0] IMEM_addr_o ;
 reg [31:0] IMEM_data_i ;
 reg [31:0] DMEM_data_i ;
@@ -33,9 +36,9 @@ top_riscV uut
 // Instruction and Data mmemory
 reg [31:0] ram [0:2**TEST_MEMORY_WIDTH-1];
 
-// initial begin
-//     $readmemh( "hello.txt" , ram );
-// end
+initial begin
+    $readmemh( TEST_PROGRAM_PATH , ram );
+end
 
 // essentially a two port ram module
 always@( posedge clk )
@@ -63,19 +66,18 @@ always #(CLK_PERIOD/2) clk=~clk;
 initial begin
     if ($test$plusargs("trace"))
     begin
-            $dumpfile("tb_top_riscV.vcd");
+        $dumpfile("tb_top_riscV.vcd");
         $dumpvars(0, tb_top_riscV);
     end
 end
 
 initial begin
     #1 reset_n<=1'bx;clk<=1'bx;
-    #(CLK_PERIOD*3) reset_n<=1;
-    #(CLK_PERIOD*3) reset_n<=0;clk<=0;
-    repeat(5) @(posedge clk);
-    reset_n<=1;
-    @(posedge clk);
-    repeat(2) @(posedge clk);
+    #(CLK_PERIOD*1) reset_n<=1;
+    #(CLK_PERIOD*1) reset_n<=0;clk<=0;
+    #(CLK_PERIOD*2) reset_n<=1;
+    
+    #(CLK_PERIOD*100);
 
     $display("Simulation Complete!");
     $finish(2);
