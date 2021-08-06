@@ -4,14 +4,18 @@
 
 li x1,1000
 li x2,2000
-#     la x1,0
+li x3,4000
+
+addi x1,x2,1000
+slt x5,x2,x1
+
+
 #     li x2,55
 #     sw x2, 8(x1)
 
 #     lw x3, 8(x1)
 
 #     bne x2,x3,error
-
 #     li x1,5
 #     add x3,x1,x2
 #     li x4,12

@@ -50,12 +50,12 @@ begin
     end
     else
     begin
-        IMEM_data_i <= ram[IMEM_addr_o[TEST_MEMORY_WIDTH-1:0]]; // always read
+        IMEM_data_i <= ram[IMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ]; // always read
 
         if ( DMEM_write_o ) // write to ram 
-            ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0]] <= DMEM_data_o;
+            ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ] <= DMEM_data_o;
         else if ( DMEM_read_o ) // read from ram
-            DMEM_data_i <= ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0]]; 
+            DMEM_data_i <= ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ]; 
     end
 end
 

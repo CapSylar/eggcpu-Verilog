@@ -32,8 +32,17 @@ module execute
     // these below are for the Write Back stage
     output reg PIP_use_mem_o,
     output reg PIP_write_reg_o,
-    output reg [4:0] PIP_rd_o
-    // *****************************************************
+    output reg [4:0] PIP_rd_o,
+    
+    // forwarding unit controls to select correct operand
+
+    input wire use_EX_MEM_rs1_i, // use rs1 from EX/MEM
+    input wire use_EX_MEM_rs2_i, // use rs2 from EX/MEM
+    input wire use_MEM_WB_rs1_i, // use rs1 from MEM/WB
+    input wire use_MEM_WB_rs2_i,  // use rs2 from MEM/WB
+
+    input wire [31:0] EX_MEM_operand_i, // rd from EX/MEM
+    input wire [31:0] MEM_WB_operand_i // rd from MEM/WB
 );
 
 // forward pipeline registers
@@ -68,23 +77,63 @@ end
 // determine what operation we need to do
 
 reg [31:0] alu_result;
+reg [31:0] operand1 , operand2;
+
+// determine what operands the ALU should use
+// 1-directly from ID/EX registers, or in the case of forwarding from EX/MEM or MEM/WB
+
+always @(*)
+begin
+    if ( use_EX_MEM_rs1_i )
+        operand1 = EX_MEM_operand_i;
+    else if ( use_MEM_WB_rs1_i )
+        operand1 = MEM_WB_operand_i;
+    else
+        operand1 = PIP_operand1_i;
+end
+
+always @(*)
+begin
+    if ( use_EX_MEM_rs2_i )
+        operand2 = EX_MEM_operand_i;
+    else if ( use_MEM_WB_rs2_i )
+        operand2 = MEM_WB_operand_i;
+    else
+        operand2 = PIP_operand2_i;   
+end
 
 always@(*)
 begin
+    alu_result = 0;
+
     case(PIP_aluOper_i)
     `ALU_ADD: // add operation
-        alu_result = PIP_operand1_i + PIP_operand2_i;
+        alu_result = operand1 + operand2;
     `ALU_SUB: // sub operation
-        alu_result = PIP_operand1_i - PIP_operand2_i;
+        alu_result = operand1 - operand2;
     `ALU_AND:
-        alu_result = PIP_operand1_i & PIP_operand2_i;
+        alu_result = operand1 & operand2;
     `ALU_XOR:
-        alu_result = PIP_operand1_i ^ PIP_operand2_i;
+        alu_result = operand1 ^ operand2;
     `ALU_OR:
-        alu_result = PIP_operand1_i | PIP_operand2_i;
+        alu_result = operand1 | operand2;
+    `ALU_SLT:
+        begin
+            if ( $signed(operand1) < $signed(operand2) )
+                alu_result = 1;
+        end
+    `ALU_SLTU:
+        begin
+            if ( operand1 < operand2 )
+                 alu_result = 1;
+        end
+    `ALU_SLL:
+        alu_result = operand1 << operand2;
+    `ALU_SRA:
+        alu_result = operand1 >>> operand2; // converve sign bit
+    `ALU_SRL:
+        alu_result = operand1 >> operand2;
 
-    default:
-        alu_result =31'b0 ; 
     endcase
 end
 

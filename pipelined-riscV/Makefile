@@ -1,7 +1,6 @@
 TEST_PROGRAMS_DIR_PATH = simulation/test-programs
 SRC_MODULES = $(shell ls src/* )
 
-
 sim: testbench.vvp
 	@echo "running simulation without trace"
 	vvp $<

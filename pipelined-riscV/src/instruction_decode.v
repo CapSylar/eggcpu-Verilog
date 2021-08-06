@@ -69,32 +69,11 @@ reg_file inst_reg_file
     .data_write_i(PIP_rd_write_i)
 );
 
-//pipeline registers
-// we need to save rs1, rs2 and rsd for later use
-
-// always@( posedge clk )
-// begin
-//     if ( !reset_n )
-//     begin
-//         PIP_operand1_o <= 0;
-//         PIP_operand2_o <= 0;
-//         PIP_rd_o <= 0;
-//         PIP_rs1_o <= 0;
-//         PIP_rs2_o <= 0;
-//     end
-//     else
-//     begin
-//         //TODO: finish this!!!
-//     end
-
-// end
-
 // generate immediate
-
 wire [31:0] imm_i = $signed(instruction[31:20]) ;
 wire [31:0] imm_s = $signed({instruction[31:25] , instruction[11:7]});
 wire [31:0] imm_b = $signed({instruction[31], instruction[7], instruction[30:25] , instruction[11:8]});
-wire [31:0] imm_u = $signed({instruction[31:12]});
+wire [31:0] imm_u = {instruction[31:12] , 12'b0}; 
 wire [31:0] imm_j = $signed({instruction[31] , instruction[19:12] , instruction[20] , instruction[30:21]});
 
 reg [31:0] current_imm ; // is equal to one of the above according to the current instruction
@@ -103,13 +82,13 @@ reg [31:0] current_imm ; // is equal to one of the above according to the curren
 
 // control signals
 reg is_imm ; // if = 1 then use immediate instead of rs2 else use rs2
-wire isBranch = 0; // if = 1 then the current instruction is a branch
-wire readMem = 0; // if = 1 we need to read from data memory
-wire memToReg = 0; //
-wire writeMem = 0;
-wire aluSrc = 0;
-wire writeReg = 0;
-wire wb_use_mem = 0; // use memory data out in to write back 
+reg isBranch = 0; // if = 1 then the current instruction is a branch
+reg readMem = 0; // if = 1 we need to read from data memory
+reg memToReg = 0; //
+reg writeMem = 0;
+reg aluSrc = 0;
+reg writeReg = 0;
+reg wb_use_mem = 0; // use memory data out in to write back 
 reg [3:0] aluOper = 0;
 
 // set control lines
@@ -118,12 +97,14 @@ always@(*)
 begin
     is_imm = 0;
     current_imm = 0;
+    writeReg = 0;
 
     case( opcode )
         `LUI: // load upper immediate
         begin
             current_imm = imm_u;
-            $display("unimplemented instruction used");
+            is_imm = 1;
+            writeReg = 1;
         end
 
         `AUIPC: 
@@ -148,34 +129,32 @@ begin
         begin
             current_imm = imm_i;
             is_imm = 1;
-            aluOper = `ALU_ADD;
+            writeReg = 1;
         end
         `STORE:
         begin
             current_imm = imm_s;
             is_imm = 1;
-            aluOper = `ALU_ADD;
         end
 
         `ARITH:
         begin
-            
+            writeReg = 1;
         end
 
         `ARITH_IMM:
         begin
             current_imm = imm_i ;
             is_imm = 1;
-            aluOper = 2;
+            writeReg = 1;
         end
         `BRANCH:
         begin
             current_imm = imm_b;
-            aluOper = 1;
         end
 
         default:
-            $display("unsupported instruction used!");
+            $display("unsupported instruction used! %d" , opcode );
     endcase
 end
 
@@ -187,20 +166,49 @@ begin
     aluOper = 0; // does not really matter
 
     case ( opcode )
+
+        `LOAD:
+            aluOper = `ALU_ADD;
+        `STORE:
+            aluOper = `ALU_ADD;
+        `BRANCH:
+            aluOper = `ALU_SUB;
         `ARITH,
         `ARITH_IMM:
         begin
-            case ( func3 )
-            3'b000: aluOper = func7 ? `ALU_SUB : `ALU_ADD; // add or sub
-            3'b001: aluOper = 0; // SLL(I): shift left logical
-            3'b010: aluOper = 0; // SLT(I): Set if less than
-            3'b011: aluOper = 0; //SLTU(I): Set if less than unsigned 
-            3'b100: aluOper = `ALU_XOR; // XOR(I)
-            3'b101: aluOper = 0; // SRL(I): shift right logical
-            3'b110: aluOper = `ALU_OR; // OR(I)
-            3'b111: aluOper = `ALU_AND; // AND(I)
+            case (func3)
+                3'b000:
+                begin
+                    if ( opcode == `ARITH_IMM )  // only case where we need to differentiate
+                        aluOper = `ALU_ADD;
+                    else
+                    begin
+                        aluOper = func7 ? `ALU_SUB : `ALU_ADD ; 
+                    end
+                end
+                
+                3'b001: aluOper = `ALU_SLL ; // shift left logical
+                3'b010: aluOper = `ALU_SLT ; // set if less than 
+                3'b011: aluOper = `ALU_SLTU ; // set if less than unsigned
+                3'b100: aluOper = `ALU_XOR ; // XOR
+                3'b101: aluOper = ( func7 ) ? `ALU_SRA : `ALU_SRL ; // shift right arithmetic or shift right logical
+                3'b110: aluOper = `ALU_OR ; // OR
+                3'b111: aluOper = `ALU_AND ; // AND
             endcase
         end
+        // `ARITH_IMM:
+        // begin
+        //     case ( func3 )
+        //         3'b000: aluOper = `ALU_ADD; // add or sub
+        //         // 3'b001: aluOper = 0; // SLL(I): shift left logical
+        //         // 3'b010: aluOper = 0; // SLT(I): Set if less than
+        //         // 3'b011: aluOper = 0; //SLTU(I): Set if less than unsigned 
+        //         // 3'b100: aluOper = `ALU_XOR; // XOR(I)
+        //         // 3'b101: aluOper = 0; // SRL(I): shift right logical
+        //         // 3'b110: aluOper = `ALU_OR; // OR(I)
+        //         // 3'b111: aluOper = `ALU_AND; // AND(I)
+        //     endcase
+        // end
     endcase
 end
 

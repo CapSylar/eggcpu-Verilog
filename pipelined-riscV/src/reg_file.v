@@ -24,7 +24,7 @@ reg [register_size-1:0]  registerFile  [(2<<address_width)-1:0];
 wire is_write = data_write_i && writereg_addr_i ;
 
 reg [register_size-1:0] data1 , data2; 
-assign data1_o = data1; // assign these to the output wires
+assign data1_o = data1; // assign these to the output 
 assign data2_o = data2;
 
 // reading from register file

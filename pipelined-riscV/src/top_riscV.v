@@ -54,10 +54,19 @@ wire EX_MEM_write_reg;
 // MEM/WB pipeline registers**********
 wire [31:0] MEM_WB_alu_result;
 wire [4:0] MEM_WB_reg_addr;
-wire MEM_WB_reg_write;
+wire MEM_WB_write_reg;
 wire MEM_WB_use_mem;
 wire [31:0] MEM_WB_DMEM_data;
 wire [4:0] MEM_WB_rd;
+
+
+// Forwarding unit *******************
+
+wire forw_EX_MEM_rs1 ;
+wire forw_EX_MEM_rs2 ;
+wire forw_MEM_WB_rs1 ;
+wire forw_MEM_WB_rs2 ;
+
 
 // ************************
 // INSTRUCTION FETCH STAGE
@@ -128,7 +137,7 @@ execute inst_execute
     .PIP_operand2_i(ID_EX_operand2), // rs2
     .PIP_rd_i(ID_EX_rd), // rd, just forward
     .PIP_immediate_i(ID_EX_immediate), // extended immediate
-.PIP_aluOper_i(ID_EX_aluOper), // need to be decoded further
+    .PIP_aluOper_i(ID_EX_aluOper), // need to be decoded further
 
     // these below are for the Memory stage
     .PIP_write_mem_i(ID_EX_write_mem),
@@ -149,7 +158,17 @@ execute inst_execute
     // these below are for the Write Back stage
     .PIP_use_mem_o(EX_MEM_use_mem),
     .PIP_write_reg_o(EX_MEM_write_reg),
-    .PIP_rd_o(EX_MEM_rd)
+    .PIP_rd_o(EX_MEM_rd),
+
+    // forwarding unit controls to select correct operand
+
+    .use_EX_MEM_rs1_i(forw_EX_MEM_rs1), // use rs1 from EX/MEM
+    .use_EX_MEM_rs2_i(forw_EX_MEM_rs2), // use rs2 from EX/MEM
+    .use_MEM_WB_rs1_i(forw_MEM_WB_rs1), // use rs1 from MEM/WB
+    .use_MEM_WB_rs2_i(forw_MEM_WB_rs2),  // use rs2 from MEM/WB
+
+    .EX_MEM_operand_i(EX_MEM_alu_result), // rd from EX/MEM
+    .MEM_WB_operand_i(WB_reg_data) // rd from MEM/WB
 );
 
 // ********************
@@ -180,7 +199,7 @@ memory_rw inst_memory_rw
 
     // MEM/WB Pipeline registers ****************
     .PIP_use_mem_o(MEM_WB_use_mem),
-    .PIP_write_reg_o(MEM_WB_reg_write),
+    .PIP_write_reg_o(MEM_WB_write_reg),
     .PIP_rd_o(MEM_WB_rd),
     .PIP_DMEM_data_o(MEM_WB_DMEM_data),
     .PIP_alu_result_o(MEM_WB_alu_result)
@@ -196,7 +215,7 @@ write_back inst_write_back
 
     // from MEM/WB pipeline registers
     .PIP_use_mem_i(MEM_WB_use_mem),
-    .PIP_write_reg_i(MEM_WB_reg_write),
+    .PIP_write_reg_i(MEM_WB_write_reg),
     .PIP_DMEM_data_i(MEM_WB_DMEM_data),
     .PIP_alu_result_i(MEM_WB_alu_result),
     .PIP_rd_i(MEM_WB_rd),
@@ -205,6 +224,31 @@ write_back inst_write_back
     .REG_write_o(WB_reg_write),
     .REG_data_o(WB_reg_data),
     .REG_addr_o(WB_reg_addr) // register number to write to
+);
+
+
+forward inst_forward
+(
+    // from ID/EX pipeline registers *******
+    .ID_EX_rs1_i( ID_EX_rs1 ),
+    .ID_EX_rs2_i( ID_EX_rs2),
+
+    // from EX/MEM pipeline registers ******
+    .EX_MEM_alu_result_i( EX_MEM_alu_result ),
+    .EX_MEM_rd_i( EX_MEM_rd ),
+    .EX_MEM_write_reg_i( EX_MEM_write_reg ),
+
+    // from MEM/WB pipeline registers *******
+    .MEM_WB_rd_i( MEM_WB_rd ),
+    .MEM_WB_write_reg_i( MEM_WB_write_reg ),
+    // output
+
+    // forward from EX_MEM stage
+    .forward_EX_MEM_rs1_o( forw_EX_MEM_rs1 ),
+    .forward_EX_MEM_rs2_o( forw_EX_MEM_rs2 ),
+    // forward from MEM_WB stage
+    .forward_MEM_WB_rs1_o( forw_MEM_WB_rs1 ),
+    .forward_MEM_WB_rs2_o( forw_MEM_WB_rs2 )
 );
 
 endmodule
