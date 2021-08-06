@@ -2,35 +2,64 @@
 // 32 general purpose registers each with 32 bits
 
 module reg_file  #(parameter address_width = 5, parameter register_size = 32 ) 
-        ( clk , reset_n , reg1_addr_i , reg2_addr_i , writereg_addr_i , data_i , data_write_i , data1_o , data2_o );
+(
+    input clk,
+    input reset_n,
+    input [address_width-1:0] reg1_addr_i,
+    input [address_width-1:0] reg2_addr_i,
+    input [address_width-1:0] writereg_addr_i,
+    input [register_size-1:0] data_i,
+    input data_write_i,
+    output wire [register_size-1:0] data1_o,
+    output wire [register_size-1:0] data2_o
+);
 
-input clk , reset_n , data_write_i;
-input [address_width-1:0] reg1_addr_i , reg2_addr_i , writereg_addr_i ; // select the registers we want 
-input [register_size-1:0] data_i;
+reg [register_size-1:0]  registerFile  [(2<<address_width)-1:0];
 
-output reg [register_size-1:0] data1_o , data2_o ;
+//TODO: consider moving to this to the forwarding logic for better organisation
+// do forwarding fro MEM/WB inside the register file to ID/EX
+// if we WB wants to write while ID wants to read form the reg file, forward what WB wants to write directly
+// to solve the hazard
 
-reg [register_size-1:0]  registerFile  [2**address_width-1:0];
+wire is_write = data_write_i && writereg_addr_i ;
 
+reg [register_size-1:0] data1 , data2; 
+assign data1_o = data1; // assign these to the output wires
+assign data2_o = data2;
+
+// reading from register file
+always@(*)
+begin
+    // read to data_o1
+    if ( is_write && writereg_addr_i == reg1_addr_i ) // forward result form WB
+        data1 = data_i;
+    else
+        data1 = registerFile[reg1_addr_i]; // read normally
+
+    // read to data_o2
+    if ( is_write && writereg_addr_i == reg2_addr_i ) // forward result form WB
+        data2 = data_i;
+    else
+        data2 = registerFile[reg2_addr_i]; // read normally   
+end
+
+
+// writing to register file
 integer  i;
 always @( posedge clk )
 begin
-    // reading happends at every posedge
-    data1_o = registerFile[reg1_addr_i];
-    data2_o = registerFile[reg2_addr_i];
-
     if ( !reset_n )
     begin
         for ( i = 0 ; i < 2**address_width ; i=i+1)
         begin
-            registerFile[i] = 0;
+            registerFile[i] <= 0;
         end
     end
 
-    else if ( data_write_i )  // write needed data
+    else if ( is_write )  // write needed data
     begin
-        if ( writereg_addr_i != 0 ) // never write to x0, thus it stays = 0, not the cleanest way to do it
-            registerFile[writereg_addr_i] <= data_i;
+        registerFile[writereg_addr_i] <= data_i;
+        $display("register %d is now %d" , writereg_addr_i , data_i );
     end
 end
 
