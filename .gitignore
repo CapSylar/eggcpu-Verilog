@@ -3,3 +3,5 @@ examples
 /.vscode/
 /single-cycle-riscV-subset/logs/
 /single-cycle-riscV-subset/build/
+/pipelined-riscV/*.vvp
+/pipelined/riscV/*.vcd
