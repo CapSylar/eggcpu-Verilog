@@ -16,6 +16,7 @@ module instruction_decode
 
     // control
     input wire id_stall_i, // stall the current instruction
+    input wire id_flush_i, // flush the local pipeline registers
 
     // ID/EX pipeline registers ***********************************
     // these below are for the EX stage
@@ -23,6 +24,8 @@ module instruction_decode
     output reg [31:0] PIP_operand2_o, // rs2
     output reg [31:0] PIP_immediate_o, // extended immediate, TODO: maybe we can get away with not saving it ?
     output reg [3:0] PIP_aluOper_o, // to determine what operation to use
+    output reg PIP_use_imm_o, // for execute stage only
+    // below is used to induce a flush
 
     // these below are for the Memory stage
     output reg PIP_write_mem_o,
@@ -98,6 +101,8 @@ begin
     is_imm = 0;
     current_imm = 0;
     writeReg = 0;
+    writeMem = 0;
+    wb_use_mem = 0;
 
     case( opcode )
         `LUI: // load upper immediate
@@ -130,11 +135,14 @@ begin
             current_imm = imm_i;
             is_imm = 1;
             writeReg = 1;
+            readMem = 1;
+            wb_use_mem = 1;
         end
         `STORE:
         begin
             current_imm = imm_s;
             is_imm = 1;
+            writeMem = 1;
         end
 
         `ARITH:
@@ -216,7 +224,7 @@ end
 
 always @(posedge clk)
 begin
-    if ( !reset_n )
+    if ( !reset_n || id_flush_i )
     begin
         PIP_rs1_o <= 0;
         PIP_rs2_o <= 0;
@@ -226,6 +234,7 @@ begin
         PIP_operand2_o <= 0;
         PIP_immediate_o <= 0;
         PIP_aluOper_o <= 0;
+        PIP_use_imm_o <= 0;
 
         PIP_write_mem_o <= 0;
         PIP_read_mem_o <= 0;
@@ -233,16 +242,17 @@ begin
         PIP_use_mem_o <= 0;
         PIP_write_reg_o <= 0 ;
     end
-    else
+    else if ( !id_stall_i ) // update only in the case where there is no stall
     begin
         PIP_rs1_o <= rs1;
         PIP_rs2_o <= rs2;
         PIP_rd_o <= rd;
 
         PIP_operand1_o <= regf_o1;
-        PIP_operand2_o <= is_imm ? current_imm : regf_o2 ;
+        PIP_operand2_o <= regf_o2;
         PIP_immediate_o <= current_imm;
         PIP_aluOper_o <= aluOper;
+        PIP_use_imm_o <= is_imm;
 
         PIP_write_mem_o <= writeMem;
         PIP_read_mem_o <= readMem;

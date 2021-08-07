@@ -12,6 +12,7 @@ module execute
     input wire [4:0] PIP_rd_i, // rd, just forward
     input wire [31:0] PIP_immediate_i, // extended immediate
     input wire [3:0] PIP_aluOper_i, // need to be decoded further
+    input wire PIP_use_imm_i, // use immediate as operand instead of rs2
 
     // these below are for the Memory stage
     input wire PIP_write_mem_i,
@@ -66,7 +67,7 @@ begin
         PIP_write_mem_o <= PIP_write_mem_i;
         PIP_read_mem_o <= PIP_read_mem_i;
         PIP_alu_alu_result_o <= alu_result;
-        PIP_second_operand_o <= 0; // TODO: write this!!!!!
+        PIP_second_operand_o <= PIP_operand2_i; // TODO: write this!!!!!
 
         PIP_use_mem_o <= PIP_use_mem_i;
         PIP_write_reg_o <= PIP_write_reg_i;

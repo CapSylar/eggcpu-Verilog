@@ -11,6 +11,7 @@ reg reset_n;
  
 wire [31:0] IMEM_addr_o ;
 reg [31:0] IMEM_data_i ;
+wire IMEM_read_n_o;
 reg [31:0] DMEM_data_i ;
 wire [31:0] DMEM_addr_o ;
 wire [31:0]  DMEM_data_o ;
@@ -26,6 +27,7 @@ top_riscV uut
     .reset_n(reset_n),
     .IMEM_addr_o(IMEM_addr_o),
     .IMEM_data_i(IMEM_data_i),
+    .IMEM_read_n_o(IMEM_read_n_o),
     .DMEM_write_o(DMEM_write_o),
     .DMEM_read_o(DMEM_read_o),
     .DMEM_data_i(DMEM_data_i),
@@ -50,7 +52,8 @@ begin
     end
     else
     begin
-        IMEM_data_i <= ram[IMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ]; // always read
+        if ( !IMEM_read_n_o )
+            IMEM_data_i <= ram[IMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ];
 
         if ( DMEM_write_o ) // write to ram 
             ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ] <= DMEM_data_o;

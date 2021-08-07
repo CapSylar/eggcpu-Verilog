@@ -6,6 +6,7 @@ module top_riscV
     // Instruction memory interface 
     output wire [31:0] IMEM_addr_o,
     input wire [31:0] IMEM_data_i,
+    output wire IMEM_read_n_o, // 0 read 1 do not read, hold all lines
 
     // Data memory interface
 
@@ -18,8 +19,6 @@ module top_riscV
 );
 
 // internals *********
-
-reg stall_if;
 wire WB_reg_write;
 wire [31:0] WB_reg_data;
 wire [4:0] WB_reg_addr;
@@ -33,6 +32,7 @@ wire [31:0] ID_EX_operand1;
 wire [31:0] ID_EX_operand2;
 wire [31:0] ID_EX_immediate;
 wire [3:0] ID_EX_aluOper;
+wire ID_EX_use_imm;
 wire ID_EX_read_mem;
 wire ID_EX_write_mem;
 wire ID_EX_use_mem;
@@ -61,12 +61,17 @@ wire [4:0] MEM_WB_rd;
 
 
 // Forwarding unit *******************
-
 wire forw_EX_MEM_rs1 ;
 wire forw_EX_MEM_rs2 ;
 wire forw_MEM_WB_rs1 ;
 wire forw_MEM_WB_rs2 ;
 
+// Hazard detection unit ************
+
+wire hzrd_IF_ID_stall;
+wire hzrd_IF_ID_flush;
+wire hzrd_ID_EX_stall;
+wire hzrd_ID_EX_flush;
 
 // ************************
 // INSTRUCTION FETCH STAGE
@@ -74,9 +79,12 @@ wire forw_MEM_WB_rs2 ;
 instruction_fetch inst_instruction_fetch
 (
     .clk(clk),
-    .stall_if_i(stall_if),
+    .stall_if_i(hzrd_IF_ID_stall),
+    .flush_if_i(hzrd_IF_ID_flush),
+
     .IMEM_data_i(IMEM_data_i),
     .IMEM_addr_o(IMEM_addr_o),
+    .IMEM_read_n_o(IMEM_read_n_o),
     .reset_n(reset_n),
     .start_addr_i(0),
     .PIP_insruction_o(IF_ID_instruction),
@@ -101,7 +109,8 @@ instruction_decode inst_instruction_decode
     .PIP_pc_i(IF_ID_pc), // PC of the instruction in the pipeline
 
     // control
-    .id_stall_i(1'b0), // stall the current instruction
+    .id_stall_i(hzrd_ID_EX_stall), // stall the current instruction
+    .id_flush_i(hzrd_ID_EX_flush), // flush the local pipeline registers
 
     // ID/EX pipeline registers ***********************************
     // these below are for the EX stage
@@ -109,6 +118,7 @@ instruction_decode inst_instruction_decode
     .PIP_operand2_o(ID_EX_operand2), // rs2
     .PIP_immediate_o(ID_EX_immediate), // extended immediate, TODO: maybe we can get away with not saving it ?
     .PIP_aluOper_o(ID_EX_aluOper), // to determine what operation to use
+    .PIP_use_imm_o(ID_EX_use_imm), // for execute stage only
 
     // these below are for the Memory stage
     .PIP_write_mem_o(ID_EX_write_mem),
@@ -138,6 +148,8 @@ execute inst_execute
     .PIP_rd_i(ID_EX_rd), // rd, just forward
     .PIP_immediate_i(ID_EX_immediate), // extended immediate
     .PIP_aluOper_i(ID_EX_aluOper), // need to be decoded further
+    .PIP_use_imm_i(ID_EX_use_imm), // use immediate as operand instead of rs2
+
 
     // these below are for the Memory stage
     .PIP_write_mem_i(ID_EX_write_mem),
@@ -226,6 +238,7 @@ write_back inst_write_back
     .REG_addr_o(WB_reg_addr) // register number to write to
 );
 
+// forwarding unit
 
 forward inst_forward
 (
@@ -250,5 +263,29 @@ forward inst_forward
     .forward_MEM_WB_rs1_o( forw_MEM_WB_rs1 ),
     .forward_MEM_WB_rs2_o( forw_MEM_WB_rs2 )
 );
+
+// hazard detection unit
+
+hazard inst_hazard
+(
+    .clk(clk),
+    .reset_n(reset_n),
+
+    // IF_ID control lines
+    .IF_ID_stall_o(hzrd_IF_ID_stall),
+    .IF_ID_flush_o(hzrd_IF_ID_flush),
+
+    // ID_EX control lines
+    .ID_EX_stall_o(hzrd_ID_EX_stall),
+    .ID_EX_flush_o(hzrd_ID_EX_flush),
+
+    // ID/EX pipeline inputs
+    .ID_EX_read_mem_i(ID_EX_read_mem),
+    .ID_EX_rd_i(ID_EX_rd),
+
+    // directly from back of ID
+    .IF_instruction_i(IF_ID_instruction)
+);
+
 
 endmodule
