@@ -16,7 +16,9 @@ module hazard
     input wire [4:0] ID_EX_rd_i,
 
     // directly from back of ID
-    input wire [31:0] IF_instruction_i
+    input wire [31:0] IF_instruction_i,
+
+    input wire EX_pc_load_i // branch or jump is taken, flush for 2 cycles
 );
 
 wire [4:0] rs1 = IF_instruction_i[19:15];
@@ -37,13 +39,23 @@ wire [4:0] rs2 = IF_instruction_i[24:20];
 
 assign IF_ID_stall_o  = ID_EX_read_mem_i && 
     (( ID_EX_rd_i == rs1 ) || ( ID_EX_rd_i == rs2 ));
-assign ID_EX_flush_o = IF_ID_stall_o;
 
 assign ID_EX_stall_o = 0 ; // for now 
 
 // Solves Control or Branch Hazards
 // this type of hazard is cause by the presence of branches and the case where we mispredicted its outcome
 
+reg reg2;
+wire ID_EX_flush = IF_ID_stall_o || EX_pc_load_i ; 
 
+always@( posedge clk ) // needed for 2 cycle flush
+begin
+    if ( !reset_n )
+        reg2 <= 0;
+    else
+        reg2 <= EX_pc_load_i ;
+end
+
+assign ID_EX_flush_o = ID_EX_flush || reg2 ;
 
 endmodule

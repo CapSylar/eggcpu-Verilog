@@ -22,3 +22,12 @@
 `define ALU_SRA 4'b1000
 `define ALU_SRL 4'b1001
 `define ALU_SLTU 4'b1010
+`define ALU_SEQ 4'b1011 // set if equal
+
+
+// Branch and Jump operation types 2-bit , first indicated wether to bypass alu result in Ex stage
+// second bit is 0 for relative and 1 for register+PC
+
+`define BNJ_JALR 2'b11
+`define BNJ_JAL 2'b10
+`define BNJ_BRANCH 2'b00

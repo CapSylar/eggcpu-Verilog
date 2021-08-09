@@ -16,7 +16,11 @@ module instruction_fetch
 
     // IF/ID pipeline registers
     output reg [31:0] PIP_insruction_o, // instruction
-    output reg [31:0] PIP_pc_o // program counter
+    output reg [31:0] PIP_pc_o, // program counter
+
+    // for branch and jump
+    input wire PIP_pc_load_i, // load target address
+    input wire [31:0] PIP_target_address_i // address to jump to
 );
 
 assign IMEM_read_n_o = stall_if_i; // do not read on the next cycle, keep IMEM_data_o the same
@@ -25,10 +29,13 @@ assign IMEM_addr_o = current_pc;
 reg [31:0] current_pc , next_pc;
 
 // logic to compute next address to fetch from
+//TODO: what happends if stall and load at the same time ???? 
 always@ (*)
 begin
     if ( stall_if_i )
         next_pc = current_pc; // hold pc since memory will not be read on this cycle ( read_mem_n = 1 )( 1 cycle stall )
+    else if ( PIP_pc_load_i )
+        next_pc = PIP_target_address_i ; // load branch or jump address
     else
         next_pc = current_pc + 4;
 end

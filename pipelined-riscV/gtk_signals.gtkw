@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
-[*] Fri Aug  6 09:14:19 2021
+[*] Mon Aug  9 15:08:24 2021
 [*]
 [dumpfile] "/home/robin/Desktop/eggcpu/pipelined-riscV/tb_top_riscV.vcd"
-[dumpfile_mtime] "Fri Aug  6 09:12:00 2021"
-[dumpfile_size] 25579
+[dumpfile_mtime] "Mon Aug  9 15:08:09 2021"
+[dumpfile_size] 33372
 [savefile] "/home/robin/Desktop/eggcpu/pipelined-riscV/gtk_signals.gtkw"
 [timestart] 0
 [size] 1920 1080
-[pos] -963 -563
-*-4.706180 115 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1283 -46
+*-4.706180 25 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_top_riscV.
 [treeopen] tb_top_riscV.uut.
-[sst_width] 289
-[signals_width] 342
+[sst_width] 340
+[signals_width] 409
 [sst_expanded] 1
-[sst_vpaned_height] 429
+[sst_vpaned_height] 352
 @28
 tb_top_riscV.clk
 tb_top_riscV.reset_n
@@ -27,23 +27,109 @@ tb_top_riscV.uut.inst_forward.forward_EX_MEM_rs2_o
 tb_top_riscV.uut.inst_forward.forward_MEM_WB_rs1_o
 [color] 3
 tb_top_riscV.uut.inst_forward.forward_MEM_WB_rs2_o
-@24
+[color] 4
+tb_top_riscV.uut.hzrd_IF_ID_stall
+[color] 4
+tb_top_riscV.uut.hzrd_IF_ID_flush
+[color] 4
+tb_top_riscV.uut.hzrd_ID_EX_stall
+[color] 4
+tb_top_riscV.uut.hzrd_ID_EX_flush
+@23
 [color] 2
 tb_top_riscV.uut.inst_instruction_fetch.IMEM_addr_o[31:0]
+@28
+[color] 2
+tb_top_riscV.uut.inst_instruction_fetch.IMEM_read_n_o
+@c02022
+[color] 2
+^1 /home/robin/Desktop/eggcpu/pipelined-riscV/simulation/riscv-filter.py
+tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+@28
+[color] 2
+(0)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(1)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(2)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(3)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(4)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(5)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(6)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(7)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(8)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(9)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(10)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(11)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(12)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(13)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(14)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(15)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(16)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(17)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(18)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(19)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(20)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(21)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(22)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(23)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(24)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(25)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(26)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(27)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(28)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(29)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(30)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+[color] 2
+(31)tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
+@1401200
+-group_end
 @22
 [color] 2
-tb_top_riscV.uut.inst_instruction_fetch.PIP_insruction_o[31:0]
-@24
-[color] 2
 tb_top_riscV.uut.inst_instruction_fetch.PIP_pc_o[31:0]
+tb_top_riscV.uut.inst_instruction_fetch.PIP_target_address_i[31:0]
+tb_top_riscV.uut.inst_instruction_fetch.next_pc[31:0]
+@28
+tb_top_riscV.uut.inst_instruction_fetch.PIP_pc_load_i
+@22
+tb_top_riscV.uut.inst_instruction_fetch.current_pc[31:0]
 @420
 [color] 6
 tb_top_riscV.uut.inst_instruction_decode.PIP_operand1_o[31:0]
 [color] 6
 tb_top_riscV.uut.inst_instruction_decode.PIP_operand2_o[31:0]
-@22
+@24
 [color] 6
 tb_top_riscV.uut.inst_instruction_decode.PIP_immediate_o[31:0]
+@22
 [color] 6
 tb_top_riscV.uut.inst_instruction_decode.PIP_aluOper_o[3:0]
 @28
@@ -55,6 +141,8 @@ tb_top_riscV.uut.inst_instruction_decode.PIP_write_mem_o
 tb_top_riscV.uut.inst_instruction_decode.PIP_use_mem_o
 [color] 6
 tb_top_riscV.uut.inst_instruction_decode.PIP_write_reg_o
+[color] 6
+tb_top_riscV.uut.inst_instruction_decode.PIP_use_imm_o
 @22
 [color] 6
 tb_top_riscV.uut.inst_instruction_decode.PIP_rs1_o[4:0]
@@ -62,17 +150,14 @@ tb_top_riscV.uut.inst_instruction_decode.PIP_rs1_o[4:0]
 tb_top_riscV.uut.inst_instruction_decode.PIP_rs2_o[4:0]
 [color] 6
 tb_top_riscV.uut.inst_instruction_decode.PIP_rd_o[4:0]
-[color] 6
-tb_top_riscV.uut.inst_instruction_decode.opcode[6:0]
-[color] 6
-tb_top_riscV.uut.inst_instruction_decode.func7[6:0]
 @28
 [color] 6
-tb_top_riscV.uut.inst_instruction_decode.func3[2:0]
-@420
-[color] 3
-tb_top_riscV.uut.inst_execute.PIP_alu_alu_result_o[31:0]
-@22
+tb_top_riscV.uut.inst_instruction_decode.PIP_bnj_oper_o[1:0]
+[color] 6
+tb_top_riscV.uut.inst_instruction_decode.PIP_is_bnj_o
+[color] 6
+tb_top_riscV.uut.inst_instruction_decode.PIP_bnj_neg_o
+@24
 [color] 3
 tb_top_riscV.uut.inst_execute.PIP_second_operand_o[31:0]
 @28
@@ -88,6 +173,10 @@ tb_top_riscV.uut.inst_execute.PIP_write_reg_o
 [color] 3
 tb_top_riscV.uut.inst_execute.PIP_rd_o[4:0]
 @28
+tb_top_riscV.uut.inst_execute.PC_load_target_o
+@22
+tb_top_riscV.uut.inst_execute.PC_target_address_o[31:0]
+@28
 [color] 2
 tb_top_riscV.uut.inst_memory_rw.PIP_use_mem_o
 [color] 2
@@ -95,9 +184,9 @@ tb_top_riscV.uut.inst_memory_rw.PIP_write_reg_o
 @22
 [color] 2
 tb_top_riscV.uut.inst_memory_rw.PIP_rd_o[4:0]
+@24
 [color] 2
 tb_top_riscV.uut.inst_memory_rw.PIP_DMEM_data_o[31:0]
-@24
 [color] 2
 tb_top_riscV.uut.inst_memory_rw.PIP_alu_result_o[31:0]
 @420
@@ -106,6 +195,12 @@ tb_top_riscV.uut.inst_memory_rw.DMEM_addr_o[31:0]
 @22
 [color] 2
 tb_top_riscV.uut.inst_memory_rw.DMEM_data_o[31:0]
+@28
+[color] 2
+tb_top_riscV.uut.inst_memory_rw.DMEM_read_o
+[color] 2
+tb_top_riscV.uut.inst_memory_rw.DMEM_write_o
+@22
 [color] 7
 tb_top_riscV.uut.inst_write_back.REG_addr_o[4:0]
 @420
@@ -130,7 +225,6 @@ tb_top_riscV.uut.inst_instruction_decode.inst_reg_file.data_write_i
 @420
 [color] 3
 tb_top_riscV.uut.inst_instruction_decode.inst_reg_file.data1_o[31:0]
-@421
 [color] 3
 tb_top_riscV.uut.inst_instruction_decode.inst_reg_file.data2_o[31:0]
 [pattern_trace] 1

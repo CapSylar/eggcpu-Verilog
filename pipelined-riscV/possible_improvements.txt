@@ -1,0 +1,7 @@
+some things to consider:
+
+
+
+
+NOTES:
+-what happends if IF_ID stall and load at the same time ???? recheck this case

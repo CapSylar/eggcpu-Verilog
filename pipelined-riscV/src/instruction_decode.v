@@ -20,11 +20,18 @@ module instruction_decode
 
     // ID/EX pipeline registers ***********************************
     // these below are for the EX stage
+    output reg [31:0] PIP_pc_o, // just forward PC
     output reg [31:0] PIP_operand1_o, // rs1
     output reg [31:0] PIP_operand2_o, // rs2
-    output reg [31:0] PIP_immediate_o, // extended immediate, TODO: maybe we can get away with not saving it ?
+    output reg [31:0] PIP_immediate_o, // extended immediate, TODO: maybe we can get away with not saving it ?\
     output reg [3:0] PIP_aluOper_o, // to determine what operation to use
     output reg PIP_use_imm_o, // for execute stage only
+
+    // for branches and jumps
+    output reg [1:0] PIP_bnj_oper_o, // branch and jump operation type
+    output reg PIP_is_bnj_o, // indicated whether this is a branch or jump
+    output reg PIP_bnj_neg_o, // indicates wether to negate result from alu when evaluating if branch is taken or not
+
     // below is used to induce a flush
 
     // these below are for the Memory stage
@@ -75,14 +82,21 @@ reg_file inst_reg_file
 // generate immediate
 wire [31:0] imm_i = $signed(instruction[31:20]) ;
 wire [31:0] imm_s = $signed({instruction[31:25] , instruction[11:7]});
-wire [31:0] imm_b = $signed({instruction[31], instruction[7], instruction[30:25] , instruction[11:8]});
-wire [31:0] imm_u = {instruction[31:12] , 12'b0}; 
-wire [31:0] imm_j = $signed({instruction[31] , instruction[19:12] , instruction[20] , instruction[30:21]});
+wire [31:0] imm_b = $signed({instruction[31], instruction[7], instruction[30:25] , instruction[11:8] , 1'b0 });
+wire [31:0] imm_u = {instruction[31:12] , 12'b0};
+wire [31:0] imm_j = $signed({instruction[31] , instruction[19:12] , instruction[20] , instruction[30:21] , 1'b0 });
+
+
+//   wire [31:0] imm_i = {{20{i_data[31]}}, i_data[31:20]};
+//   wire [31:0] imm_s = {{20{i_data[31]}}, i_data[31:25], i_data[11:7]};
+//   wire [31:0] imm_b = {{19{i_data[31]}}, i_data[31], i_data[7], i_data[30:25], i_data[11:8], 1'b0};
+//   wire [31:0] imm_u = {i_data[31:12], 12'b0};
+//   wire [31:0] imm_j = {{11{i_data[31]}}, i_data[31], i_data[19:12], i_data[20], i_data[30:21], 1'b0};
+
 
 reg [31:0] current_imm ; // is equal to one of the above according to the current instruction
+
 // decode opcodes
-
-
 // control signals
 reg is_imm ; // if = 1 then use immediate instead of rs2 else use rs2
 reg isBranch = 0; // if = 1 then the current instruction is a branch
@@ -94,8 +108,15 @@ reg writeReg = 0;
 reg wb_use_mem = 0; // use memory data out in to write back 
 reg [3:0] aluOper = 0;
 
-// set control lines
 
+// for jumps and branches
+
+reg [1:0] bnj_oper;
+reg is_bnj;
+reg bnj_neg;
+
+
+// decode
 always@(*)
 begin
     is_imm = 0;
@@ -104,6 +125,9 @@ begin
     writeMem = 0;
     wb_use_mem = 0;
     readMem = 0; 
+    bnj_oper = 0;
+    is_bnj = 0;
+    bnj_neg = 0;
 
     case( opcode )
         `LUI: // load upper immediate
@@ -119,16 +143,28 @@ begin
             $display("unimplemented instruction used");
         end
 
+        `BRANCH:
+        begin
+            current_imm = imm_b;
+            is_bnj = 1;
+            bnj_oper = `BNJ_BRANCH;
+        end
+
+
         `JAL: // jump and link
         begin
             current_imm = imm_j; 
-            $display("unimplemented instruction used");
+            is_bnj = 1;
+            writeReg = 1;
+            bnj_oper = `BNJ_JAL;
         end
 
         `JALR: // jump and link register
         begin
             current_imm = imm_i; 
-            $display("unimplemented instruction used");
+            is_bnj = 1;
+            writeReg = 1;
+            bnj_oper = `BNJ_JALR;
         end
 
         `LOAD:
@@ -157,11 +193,6 @@ begin
             is_imm = 1;
             writeReg = 1;
         end
-        `BRANCH:
-        begin
-            current_imm = imm_b;
-        end
-
         default:
             $display("unsupported instruction used! %d" , opcode );
     endcase
@@ -181,7 +212,38 @@ begin
         `STORE:
             aluOper = `ALU_ADD;
         `BRANCH:
-            aluOper = `ALU_SUB;
+        begin
+         case ( func3 )
+            3'b000: // BEQ: branch if equal
+            begin
+                aluOper = `ALU_SEQ;
+            end
+            3'b001: // BNE: branch if not equal
+            begin
+                aluOper = `ALU_SEQ;
+                bnj_neg = 1;
+            end
+            3'b100: // BLT: branch if less than
+            begin
+                aluOper = `ALU_SLT;
+            end
+            3'b101: // BGE: branch if greater than or equal
+            begin
+                aluOper = `ALU_SLT;
+                bnj_neg = 1;
+            end
+            3'b110: //BLTU: branch if less than unsigned
+            begin
+                aluOper = `ALU_SLTU;
+            end
+            3'b111: //BGEU: branch if greater than unsigned or equal
+            begin
+                aluOper = `ALU_SLTU;
+                bnj_neg = 1;
+            end
+            endcase 
+        end
+            
         `ARITH,
         `ARITH_IMM:
         begin
@@ -205,19 +267,6 @@ begin
                 3'b111: aluOper = `ALU_AND ; // AND
             endcase
         end
-        // `ARITH_IMM:
-        // begin
-        //     case ( func3 )
-        //         3'b000: aluOper = `ALU_ADD; // add or sub
-        //         // 3'b001: aluOper = 0; // SLL(I): shift left logical
-        //         // 3'b010: aluOper = 0; // SLT(I): Set if less than
-        //         // 3'b011: aluOper = 0; //SLTU(I): Set if less than unsigned 
-        //         // 3'b100: aluOper = `ALU_XOR; // XOR(I)
-        //         // 3'b101: aluOper = 0; // SRL(I): shift right logical
-        //         // 3'b110: aluOper = `ALU_OR; // OR(I)
-        //         // 3'b111: aluOper = `ALU_AND; // AND(I)
-        //     endcase
-        // end
     endcase
 end
 
@@ -227,6 +276,7 @@ always @(posedge clk)
 begin
     if ( !reset_n || id_flush_i )
     begin
+        PIP_pc_o <= 0;
         PIP_rs1_o <= 0;
         PIP_rs2_o <= 0;
         PIP_rd_o <= 0;
@@ -242,9 +292,15 @@ begin
 
         PIP_use_mem_o <= 0;
         PIP_write_reg_o <= 0 ;
+
+        // branches and jumps
+        PIP_bnj_oper_o <= 0; // branch and jump operation type
+        PIP_is_bnj_o <= 0; // indicated whether this is a branch or jump
+        PIP_bnj_neg_o <= 0;
     end
     else if ( !id_stall_i ) // update only in the case where there is no stall
     begin
+        PIP_pc_o <= PIP_pc_i;
         PIP_rs1_o <= rs1;
         PIP_rs2_o <= rs2;
         PIP_rd_o <= rd;
@@ -260,6 +316,11 @@ begin
 
         PIP_use_mem_o <= wb_use_mem;
         PIP_write_reg_o <= writeReg;
+
+        // branches and jumps
+        PIP_bnj_oper_o <= bnj_oper;
+        PIP_is_bnj_o <= is_bnj;
+        PIP_bnj_neg_o <= bnj_neg ; 
     end
 end
 

@@ -23,11 +23,15 @@ wire WB_reg_write;
 wire [31:0] WB_reg_data;
 wire [4:0] WB_reg_addr;
 
+wire PC_load_target;
+wire [31:0] PC_target_address;
+
 // IF/ID pipeline registers***********
 wire [31:0] IF_ID_instruction;
 wire [31:0] IF_ID_pc;
 
 //ID/EX pipeline registers************
+wire [31:0] ID_EX_pc;
 wire [31:0] ID_EX_operand1;
 wire [31:0] ID_EX_operand2;
 wire [31:0] ID_EX_immediate;
@@ -41,6 +45,10 @@ wire [4:0] ID_EX_rs1;
 wire [4:0] ID_EX_rs2;
 wire [4:0] ID_EX_rd;
 
+wire [1:0] ID_EX_bnj_oper;
+wire ID_EX_is_bnj;
+wire ID_EX_bnj_neg;
+
 // EX/MEM pipeline registers**********
 wire [31:0] EX_MEM_alu_result;
 wire [31:0] EX_MEM_second_op;
@@ -49,7 +57,6 @@ wire EX_MEM_read_mem;
 wire EX_MEM_write_mem;
 wire EX_MEM_use_mem;
 wire EX_MEM_write_reg;
-
 
 // MEM/WB pipeline registers**********
 wire [31:0] MEM_WB_alu_result;
@@ -88,7 +95,10 @@ instruction_fetch inst_instruction_fetch
     .reset_n(reset_n),
     .start_addr_i(0),
     .PIP_insruction_o(IF_ID_instruction),
-    .PIP_pc_o(IF_ID_pc)
+    .PIP_pc_o(IF_ID_pc),
+
+    .PIP_pc_load_i(PC_load_target),
+    .PIP_target_address_i(PC_target_address)
 );
 
 // ********************
@@ -114,11 +124,19 @@ instruction_decode inst_instruction_decode
 
     // ID/EX pipeline registers ***********************************
     // these below are for the EX stage
+
+    .PIP_pc_o(ID_EX_pc),
     .PIP_operand1_o(ID_EX_operand1), // rs1
     .PIP_operand2_o(ID_EX_operand2), // rs2
     .PIP_immediate_o(ID_EX_immediate), // extended immediate, TODO: maybe we can get away with not saving it ?
     .PIP_aluOper_o(ID_EX_aluOper), // to determine what operation to use
     .PIP_use_imm_o(ID_EX_use_imm), // for execute stage only
+
+    // for branches and jumps
+
+    .PIP_bnj_oper_o(ID_EX_bnj_oper), // branch and jump operation type
+    .PIP_is_bnj_o(ID_EX_is_bnj), // indicated whether this is a branch or jump
+    .PIP_bnj_neg_o(ID_EX_bnj_neg), // indicates wether to negate result from alu when evaluating if branch is taken or not
 
     // these below are for the Memory stage
     .PIP_write_mem_o(ID_EX_write_mem),
@@ -143,6 +161,7 @@ execute inst_execute
     .reset_n(reset_n),
 
     // from ID/EX pipeline registers
+    .PIP_pc_i(ID_EX_pc),
     .PIP_operand1_i(ID_EX_operand1), // rs1
     .PIP_operand2_i(ID_EX_operand2), // rs2
     .PIP_rd_i(ID_EX_rd), // rd, just forward
@@ -150,6 +169,11 @@ execute inst_execute
     .PIP_aluOper_i(ID_EX_aluOper), // need to be decoded further
     .PIP_use_imm_i(ID_EX_use_imm), // use immediate as operand instead of rs2
 
+    //for branches and jumps
+
+    .PIP_bnj_oper_i(ID_EX_bnj_oper),
+    .PIP_is_bnj_i(ID_EX_is_bnj),
+    .PIP_bnj_neg_i(ID_EX_bnj_neg),
 
     // these below are for the Memory stage
     .PIP_write_mem_i(ID_EX_write_mem),
@@ -180,7 +204,11 @@ execute inst_execute
     .use_MEM_WB_rs2_i(forw_MEM_WB_rs2),  // use rs2 from MEM/WB
 
     .EX_MEM_operand_i(EX_MEM_alu_result), // rd from EX/MEM
-    .MEM_WB_operand_i(WB_reg_data) // rd from MEM/WB
+    .MEM_WB_operand_i(WB_reg_data), // rd from MEM/WB
+
+    // to fetch stage
+    .PC_load_target_o(PC_load_target),
+    .PC_target_address_o(PC_target_address)
 );
 
 // ********************
@@ -284,7 +312,8 @@ hazard inst_hazard
     .ID_EX_rd_i(ID_EX_rd),
 
     // directly from back of ID
-    .IF_instruction_i(IF_ID_instruction)
+    .IF_instruction_i(IF_ID_instruction),
+    .EX_pc_load_i(PC_load_target)
 );
 
 

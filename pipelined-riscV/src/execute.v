@@ -7,12 +7,19 @@ module execute
 
     // from ID/EX pipeline registers
 
+    input wire [31:0] PIP_pc_i,
     input wire [31:0] PIP_operand1_i, // rs1
     input wire [31:0] PIP_operand2_i, // rs2
     input wire [4:0] PIP_rd_i, // rd, just forward
     input wire [31:0] PIP_immediate_i, // extended immediate
     input wire [3:0] PIP_aluOper_i, // need to be decoded further
     input wire PIP_use_imm_i, // use immediate as operand instead of rs2
+
+    // for branches and jumps
+
+    input wire [1:0] PIP_bnj_oper_i, // bit 0 is bypass and bit 1 is pc-relative or reg-relative
+    input wire PIP_is_bnj_i,
+    input wire PIP_bnj_neg_i,
 
     // these below are for the Memory stage
     input wire PIP_write_mem_i,
@@ -43,7 +50,11 @@ module execute
     input wire use_MEM_WB_rs2_i,  // use rs2 from MEM/WB
 
     input wire [31:0] EX_MEM_operand_i, // rd from EX/MEM
-    input wire [31:0] MEM_WB_operand_i // rd from MEM/WB
+    input wire [31:0] MEM_WB_operand_i, // rd from MEM/WB
+
+    // to PC, for branches and jumps
+    output wire PC_load_target_o,
+    output reg [31:0] PC_target_address_o
 );
 
 // forward pipeline registers
@@ -66,7 +77,7 @@ begin
     begin
         PIP_write_mem_o <= PIP_write_mem_i;
         PIP_read_mem_o <= PIP_read_mem_i;
-        PIP_alu_result_o <= alu_result;
+        PIP_alu_result_o <= (PIP_is_bnj_i && PIP_bnj_oper_i[1]) ? PIP_pc_i+4 : alu_result; // if branch or jump and bypass is required forward pc+4 instead of alu_result
         PIP_second_operand_o <= new_rs2;
 
         PIP_use_mem_o <= PIP_use_mem_i;
@@ -140,6 +151,11 @@ begin
             if ( operand1 < operand2 )
                  alu_result = 1;
         end
+    `ALU_SEQ:
+        begin
+            if ( operand1 == operand2 )
+                alu_result = 1;
+        end
     `ALU_SLL:
         alu_result = operand1 << operand2;
     `ALU_SRA:
@@ -150,8 +166,17 @@ begin
     endcase
 end
 
+// branch or jump handling
+// if it needs a bypass then its a jump instruction thus load unconditionally
+assign PC_load_target_o = PIP_is_bnj_i && (PIP_bnj_oper_i[1] || ( alu_result && !PIP_bnj_neg_i ) || ( !alu_result && PIP_bnj_neg_i )) ;
 
-
+always@(*)
+begin
+    if ( PIP_bnj_oper_i[0] ) // if 1 register relative => add rs1 and immediate
+        PC_target_address_o = PIP_operand1_i + PIP_immediate_i;
+    else // else 0 pc relative , add immediate to PC
+        PC_target_address_o = PIP_pc_i + PIP_immediate_i;
+end
 
 
 
