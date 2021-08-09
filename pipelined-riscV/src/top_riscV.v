@@ -164,7 +164,7 @@ execute inst_execute
     // these below are for the Memory stage
     .PIP_write_mem_o(EX_MEM_write_mem),
     .PIP_read_mem_o(EX_MEM_read_mem),
-    .PIP_alu_alu_result_o(EX_MEM_alu_result),
+    .PIP_alu_result_o(EX_MEM_alu_result),
     .PIP_second_operand_o(EX_MEM_second_op), // if data mem write is on, this will be written
 
     // these below are for the Write Back stage

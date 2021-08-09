@@ -27,7 +27,7 @@ module execute
     // these below are for the Memory stage
     output reg PIP_write_mem_o,
     output reg PIP_read_mem_o,
-    output reg [31:0] PIP_alu_alu_result_o,
+    output reg [31:0] PIP_alu_result_o,
     output reg [31:0] PIP_second_operand_o, // if data mem write is on, this will be written
 
     // these below are for the Write Back stage
@@ -54,7 +54,7 @@ begin
     begin
         PIP_write_mem_o <= 0;
         PIP_read_mem_o <= 0;
-        PIP_alu_alu_result_o <= 0;
+        PIP_alu_result_o <= 0;
         PIP_second_operand_o <= 0;
 
         PIP_use_mem_o <= 0;
@@ -66,8 +66,8 @@ begin
     begin
         PIP_write_mem_o <= PIP_write_mem_i;
         PIP_read_mem_o <= PIP_read_mem_i;
-        PIP_alu_alu_result_o <= alu_result;
-        PIP_second_operand_o <= PIP_operand2_i; // TODO: write this!!!!!
+        PIP_alu_result_o <= alu_result;
+        PIP_second_operand_o <= new_rs2;
 
         PIP_use_mem_o <= PIP_use_mem_i;
         PIP_write_reg_o <= PIP_write_reg_i;
@@ -80,10 +80,14 @@ end
 reg [31:0] alu_result;
 reg [31:0] operand1 , operand2;
 
+
+// updated rs2, if we have no forwarding happening then its the same rs2
+reg [31:0] new_rs2;
+
 // determine what operands the ALU should use
 // 1-directly from ID/EX registers, or in the case of forwarding from EX/MEM or MEM/WB
 
-always @(*)
+always @(*) // calculate operand1
 begin
     if ( use_EX_MEM_rs1_i )
         operand1 = EX_MEM_operand_i;
@@ -93,14 +97,22 @@ begin
         operand1 = PIP_operand1_i;
 end
 
-always @(*)
+always@(*)
 begin
     if ( use_EX_MEM_rs2_i )
-        operand2 = EX_MEM_operand_i;
+        new_rs2 = EX_MEM_operand_i;
     else if ( use_MEM_WB_rs2_i )
-        operand2 = MEM_WB_operand_i;
+        new_rs2 = MEM_WB_operand_i;
     else
-        operand2 = PIP_operand2_i;   
+        new_rs2 = PIP_operand2_i; // stays the same
+end
+
+always@(*) // calculate operand2 
+begin
+    if ( PIP_use_imm_i )
+        operand2 = PIP_immediate_i;
+    else
+        operand2 = new_rs2;
 end
 
 always@(*)

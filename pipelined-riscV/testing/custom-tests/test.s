@@ -3,11 +3,9 @@
 #simple test, ok= exit code 2
 
 li x1,1000
-li x2,2000
-li x3,4000
-
-addi x1,x2,1000
-slt x5,x2,x1
+sw x1, 0(x0)
+lw x2, 0(x0)
+add x3,x2,x1
 
 
 #     li x2,55

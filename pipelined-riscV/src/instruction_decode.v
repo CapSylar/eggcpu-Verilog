@@ -103,6 +103,7 @@ begin
     writeReg = 0;
     writeMem = 0;
     wb_use_mem = 0;
+    readMem = 0; 
 
     case( opcode )
         `LUI: // load upper immediate
