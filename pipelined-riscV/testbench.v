@@ -4,17 +4,6 @@ module tb_top_riscV
 // credit: heavily inspired from this testbench => https://github.com/georgeyhere/Toast-RV32i/blob/main/testbench.v
 // define testbenches , riscv-official tests
 
-`define RR_ADD   0
-`define RR_SUB   1
-`define RR_AND   2
-`define RR_OR    3
-`define RR_XOR   4
-`define RR_SLT   5
-`define RR_SLTU  6
-`define RR_SLL   7
-`define RR_SRL   8
-`define RR_SRA   9
-
 // Register-Register
 `define RR_ADD   0
 `define RR_SUB   1
@@ -65,8 +54,13 @@ module tb_top_riscV
 `define S_SH     34
 `define S_SW     35
 
+
+// TESTBENCH PARAMETERS
 parameter TEST_MEMORY_WIDTH = 13 ;
-parameter SINGLE_TEST = `RR_ADD; 
+parameter SINGLE_TEST = `RR_SLL; 
+parameter TEST_TIME_MAX_TICKS = 100000;
+parameter START_INDEX = `RR_ADD ;
+parameter END_INDEX = `J_JALR ;
 
 
 // Internal definitions *****
@@ -142,6 +136,9 @@ task load_test;
         #20; // 2 cycles
 
         case(index)
+
+
+            //********* Register register instructions
             `RR_ADD: $readmemh( "testing/build-files/add.S.hex" , ram );
             `RR_SUB: $readmemh( "testing/build-files/sub.S.hex" , ram );
             `RR_AND: $readmemh( "testing/build-files/and.S.hex" , ram );
@@ -152,6 +149,36 @@ task load_test;
             `RR_SLL: $readmemh( "testing/build-files/sll.S.hex" , ram );
             `RR_SRL: $readmemh( "testing/build-files/srl.S.hex" , ram );
             `RR_SRA: $readmemh( "testing/build-files/sra.S.hex" , ram );
+
+            //*********** register Immediate instructions
+
+            `I_ADDI: $readmemh( "testing/build-files/addi.S.hex" , ram );
+            `I_ANDI: $readmemh( "testing/build-files/andi.S.hex" , ram );
+            `I_ORI: $readmemh( "testing/build-files/ori.S.hex" , ram );
+            `I_XORI: $readmemh( "testing/build-files/xori.S.hex" , ram );
+            `I_SLTI: $readmemh( "testing/build-files/slti.S.hex" , ram );
+            `I_SLLI: $readmemh( "testing/build-files/slli.S.hex" , ram );
+            `I_SRLI: $readmemh( "testing/build-files/srli.S.hex" , ram );
+            `I_SRAI: $readmemh( "testing/build-files/srai.S.hex" , ram );
+
+            //************ conditional branch instructions
+
+            `B_BEQ: $readmemh( "testing/build-files/beq.S.hex" , ram );
+            `B_BNE: $readmemh( "testing/build-files/bne.S.hex" , ram );
+            `B_BLT: $readmemh( "testing/build-files/blt.S.hex" , ram );
+            `B_BGE: $readmemh( "testing/build-files/bge.S.hex" , ram );
+            `B_BLTU:$readmemh( "testing/build-files/bltu.S.hex" , ram );
+            `B_BGEU:$readmemh( "testing/build-files/bgeu.S.hex" , ram );
+
+            //************ upper immediate instructions
+
+            `UI_LUI: $readmemh( "testing/build-files/lui.S.hex" , ram );
+            `UI_AUIPC: $readmemh( "testing/build-files/auipc.S.hex" , ram );
+
+            //************ Jump and link instructions
+            `J_JAL: $readmemh( "testing/build-files/jal.S.hex" , ram );
+            `J_JALR: $readmemh( "testing/build-files/jalr.S.hex" , ram );
+
         endcase
 
         $display("Loading testfile with ID => %0d ", index );
@@ -161,10 +188,12 @@ endtask
 integer t;
 task eval_result;
     input integer index;
+    output integer result;
     begin
         reset_n = 1;
         // wait some delay before declaring failed
-        for(t=0;t<=100000;t=t+1)
+        result = 0; 
+        for(t=0;t<=TEST_TIME_MAX_TICKS;t=t+1)
         begin
             @(posedge clk)
             begin
@@ -174,19 +203,21 @@ task eval_result;
                 uut.inst_instruction_decode.inst_reg_file.registerFile[17] == 93 && 
                 uut.inst_instruction_decode.inst_reg_file.registerFile[10] == 0  )
                 begin
+                    result = 1; // test passed
                     $display("[TEST PASSED] => TEST-ID : %0d" , index );
-                    t = 100000;     // stop
+                    t = TEST_TIME_MAX_TICKS;     // stop
                 end
                 else if ( TRAP )
                 begin
                     $display("[TEST FAILED] EXCEPTION OCCURED! => TEST-ID : %0d " , index );
                     $display("x3 = %0d, x17 = %0d, x10 = %0d" , uut.inst_instruction_decode.inst_reg_file.registerFile[3] , uut.inst_instruction_decode.inst_reg_file.registerFile[17] , uut.inst_instruction_decode.inst_reg_file.registerFile[10] ) ; 
-                    $finish;
-                end
-                else if ( t >= 99900 )
+                    t = TEST_TIME_MAX_TICKS;     // stop
+
+                end 
+                else if ( t >= TEST_TIME_MAX_TICKS-1  ) // just before hitting the maximum 
                 begin
                     $display("[TEST FAILED] TIMED OUT => TEST-ID : %0d ", index);
-                    $finish;
+                    t = TEST_TIME_MAX_TICKS;     // stop
                 end
             end
         end
@@ -201,8 +232,10 @@ initial begin
     end
 end
 
-integer test_index;
-
+integer test_index = 0;
+integer num_passed = 0;
+integer num_failed = 0;
+integer current = 0;
 initial 
 begin
     reset_n <= 0;
@@ -212,17 +245,21 @@ begin
     begin
         $display("running all tests");
 
-        for ( test_index = `RR_ADD ; test_index <= `RR_SRA ; test_index=test_index+1 )
+        for ( test_index = START_INDEX ; test_index <= END_INDEX ; test_index=test_index+1 )
         begin
             $display("*************");
             $display("Running test %d" , test_index );
             load_test(test_index);
             #50;
-            eval_result(test_index);
+            eval_result(test_index , current );
+            num_passed = num_passed + current;
+            if ( !current )
+                num_failed = num_failed + 1;
         end
         
         $display("**************************");
-        $display("All Tests finished!");
+        $display("Tests passed: %0d" , num_passed );
+        $display("Tests failed: %0d" , num_failed );
         $finish;
     end
     else // run single test
@@ -230,7 +267,7 @@ begin
         $display("Running in single test mode");
         $display("Running Test TEST-ID : %d" ,SINGLE_TEST );
         load_test(SINGLE_TEST);
-        eval_result(SINGLE_TEST);
+        eval_result(SINGLE_TEST , current );
         $finish;
     end
 end

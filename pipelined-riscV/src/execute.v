@@ -140,6 +140,8 @@ begin
         operand2 = new_rs2;
 end
 
+wire shift_amount = operand2[4:0];
+
 always@(*)
 begin
     alu_result = 0;
@@ -171,11 +173,11 @@ begin
                 alu_result = 1;
         end
     `ALU_SLL:
-        alu_result = operand1 << operand2;
+        alu_result = operand1 << shift_amount;
     `ALU_SRA:
-        alu_result = operand1 >>> operand2; // converve sign bit
+        alu_result = operand1 >>> shift_amount; // converve sign bit
     `ALU_SRL:
-        alu_result = operand1 >> operand2;
+        alu_result = operand1 >> shift_amount;
 
     endcase
 end
