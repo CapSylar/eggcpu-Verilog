@@ -14,11 +14,17 @@ module write_back
     // to reg file
     output wire REG_write_o,
     output wire [31:0] REG_data_o, // data to write to register file
-    output wire [4:0] REG_addr_o // register number to write to
+    output wire [4:0] REG_addr_o, // register number to write to
+
+    // for TRAPS
+    input wire PIP_TRAP_i,
+    output wire PIP_TRAP_o
 );
 
 assign REG_write_o = PIP_write_reg_i;
 assign REG_data_o = PIP_use_mem_i ? PIP_DMEM_data_i : PIP_alu_result_i ;
 assign REG_addr_o = PIP_rd_i;
+
+assign PIP_TRAP_o = PIP_TRAP_i;
 
 endmodule

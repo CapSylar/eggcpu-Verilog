@@ -59,7 +59,7 @@ begin
     else if ( is_write )  // write needed data
     begin
         registerFile[writereg_addr_i] <= data_i;
-        $display("register %d is now %d" , writereg_addr_i , data_i );
+        // $display("register %d is now %d" , writereg_addr_i , data_i );
     end
 end
 

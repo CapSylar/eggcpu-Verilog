@@ -14,8 +14,11 @@ module top_riscV
     output wire DMEM_read_o,
     input wire [31:0] DMEM_data_i,
     output wire [31:0] DMEM_addr_o,
-    output wire [31:0] DMEM_data_o    
+    output wire [31:0] DMEM_data_o,    
     // *** 
+
+    // exception lines
+    output wire TRAP_o // signals an exception
 );
 
 // internals *********
@@ -41,6 +44,7 @@ wire ID_EX_read_mem;
 wire ID_EX_write_mem;
 wire ID_EX_use_mem;
 wire ID_EX_write_reg;
+wire ID_EX_use_pc;
 wire [4:0] ID_EX_rs1;
 wire [4:0] ID_EX_rs2;
 wire [4:0] ID_EX_rd;
@@ -48,6 +52,7 @@ wire [4:0] ID_EX_rd;
 wire [1:0] ID_EX_bnj_oper;
 wire ID_EX_is_bnj;
 wire ID_EX_bnj_neg;
+wire ID_EX_TRAP;
 
 // EX/MEM pipeline registers**********
 wire [31:0] EX_MEM_alu_result;
@@ -57,6 +62,8 @@ wire EX_MEM_read_mem;
 wire EX_MEM_write_mem;
 wire EX_MEM_use_mem;
 wire EX_MEM_write_reg;
+wire EX_MEM_TRAP;
+
 
 // MEM/WB pipeline registers**********
 wire [31:0] MEM_WB_alu_result;
@@ -65,6 +72,7 @@ wire MEM_WB_write_reg;
 wire MEM_WB_use_mem;
 wire [31:0] MEM_WB_DMEM_data;
 wire [4:0] MEM_WB_rd;
+wire MEM_WB_TRAP;
 
 
 // Forwarding unit *******************
@@ -131,6 +139,8 @@ instruction_decode inst_instruction_decode
     .PIP_immediate_o(ID_EX_immediate), // extended immediate, TODO: maybe we can get away with not saving it ?
     .PIP_aluOper_o(ID_EX_aluOper), // to determine what operation to use
     .PIP_use_imm_o(ID_EX_use_imm), // for execute stage only
+    .PIP_use_pc_o(ID_EX_use_pc), // for execute stage only
+
 
     // for branches and jumps
 
@@ -149,7 +159,9 @@ instruction_decode inst_instruction_decode
     // these below are used are for the forwarding unit
     .PIP_rs1_o(ID_EX_rs1), // address of first register operand
     .PIP_rs2_o(ID_EX_rs2), // address of second register operand
-    .PIP_rd_o(ID_EX_rd) // address of destination register
+    .PIP_rd_o(ID_EX_rd), // address of destination register
+
+    .PIP_TRAP_o(ID_EX_TRAP)
 );
 
 // ********************
@@ -168,6 +180,7 @@ execute inst_execute
     .PIP_immediate_i(ID_EX_immediate), // extended immediate
     .PIP_aluOper_i(ID_EX_aluOper), // need to be decoded further
     .PIP_use_imm_i(ID_EX_use_imm), // use immediate as operand instead of rs2
+    .PIP_use_pc_i(ID_EX_use_pc) , // use PC as first operand1 instread of rs1
 
     //for branches and jumps
 
@@ -208,7 +221,11 @@ execute inst_execute
 
     // to fetch stage
     .PC_load_target_o(PC_load_target),
-    .PC_target_address_o(PC_target_address)
+    .PC_target_address_o(PC_target_address),
+
+    // for TRAPS
+    .PIP_TRAP_i(ID_EX_TRAP),
+    .PIP_TRAP_o(EX_MEM_TRAP)
 );
 
 // ********************
@@ -242,7 +259,11 @@ memory_rw inst_memory_rw
     .PIP_write_reg_o(MEM_WB_write_reg),
     .PIP_rd_o(MEM_WB_rd),
     .PIP_DMEM_data_o(MEM_WB_DMEM_data),
-    .PIP_alu_result_o(MEM_WB_alu_result)
+    .PIP_alu_result_o(MEM_WB_alu_result),
+
+    // for TRAPS
+    .PIP_TRAP_i(EX_MEM_TRAP),
+    .PIP_TRAP_o(MEM_WB_TRAP)
 );
 
 // ********************
@@ -263,7 +284,11 @@ write_back inst_write_back
     // to reg file
     .REG_write_o(WB_reg_write),
     .REG_data_o(WB_reg_data),
-    .REG_addr_o(WB_reg_addr) // register number to write to
+    .REG_addr_o(WB_reg_addr), // register number to write to
+
+    // for TRAPS
+    .PIP_TRAP_i(MEM_WB_TRAP),
+    .PIP_TRAP_o(TRAP_o) // drive CPU trap line
 );
 
 // forwarding unit

@@ -14,6 +14,7 @@ module execute
     input wire [31:0] PIP_immediate_i, // extended immediate
     input wire [3:0] PIP_aluOper_i, // need to be decoded further
     input wire PIP_use_imm_i, // use immediate as operand instead of rs2
+    input wire PIP_use_pc_i, // use PC as first operand1 instread of rs1
 
     // for branches and jumps
 
@@ -54,7 +55,11 @@ module execute
 
     // to PC, for branches and jumps
     output wire PC_load_target_o,
-    output reg [31:0] PC_target_address_o
+    output reg [31:0] PC_target_address_o,
+
+    // for TRAPS
+    input wire PIP_TRAP_i, // just forward this
+    output reg PIP_TRAP_o
 );
 
 // forward pipeline registers
@@ -71,6 +76,8 @@ begin
         PIP_use_mem_o <= 0;
         PIP_write_reg_o <= 0;
         PIP_rd_o <= 0 ;
+
+        PIP_TRAP_o <= 0;
     end
 
     else // just forward
@@ -83,6 +90,8 @@ begin
         PIP_use_mem_o <= PIP_use_mem_i;
         PIP_write_reg_o <= PIP_write_reg_i;
         PIP_rd_o <= PIP_rd_i;
+
+        PIP_TRAP_o <= PIP_TRAP_i;
     end
 end
 
@@ -100,7 +109,9 @@ reg [31:0] new_rs2;
 
 always @(*) // calculate operand1
 begin
-    if ( use_EX_MEM_rs1_i )
+    if ( PIP_use_pc_i )
+        operand1 = PIP_pc_i; // use pc as first operand, ALUIPC instruction
+    else if ( use_EX_MEM_rs1_i )
         operand1 = EX_MEM_operand_i;
     else if ( use_MEM_WB_rs1_i )
         operand1 = MEM_WB_operand_i;
@@ -173,7 +184,7 @@ assign PC_load_target_o = PIP_is_bnj_i && (PIP_bnj_oper_i[1] || ( alu_result && 
 always@(*)
 begin
     if ( PIP_bnj_oper_i[0] ) // if 1 register relative => add rs1 and immediate
-        PC_target_address_o = PIP_operand1_i + PIP_immediate_i;
+        PC_target_address_o = operand1 + PIP_immediate_i;
     else // else 0 pc relative , add immediate to PC
         PC_target_address_o = PIP_pc_i + PIP_immediate_i;
 end

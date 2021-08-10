@@ -26,7 +26,11 @@ module memory_rw
     output reg PIP_write_reg_o,
     output reg [4:0] PIP_rd_o,
     output wire [31:0] PIP_DMEM_data_o ,
-    output reg [31:0] PIP_alu_result_o
+    output reg [31:0] PIP_alu_result_o,
+
+    // for TRAPS
+    input wire PIP_TRAP_i,
+    output reg PIP_TRAP_o
 );
 
 // forward
@@ -44,6 +48,8 @@ begin
         PIP_write_reg_o <= 0;
         PIP_alu_result_o <= 0 ;
         PIP_rd_o <= 0 ;
+
+        PIP_TRAP_o <= 0;
     end 
     else // just forward some lines 
     begin
@@ -51,6 +57,8 @@ begin
         PIP_write_reg_o <= PIP_write_reg_i;
         PIP_alu_result_o <= PIP_alu_result_i;
         PIP_rd_o <= PIP_rd_i; 
+
+        PIP_TRAP_o <= PIP_TRAP_i;
     end   
 end
 

@@ -26,6 +26,7 @@ module instruction_decode
     output reg [31:0] PIP_immediate_o, // extended immediate, TODO: maybe we can get away with not saving it ?\
     output reg [3:0] PIP_aluOper_o, // to determine what operation to use
     output reg PIP_use_imm_o, // for execute stage only
+    output reg PIP_use_pc_o, // for execute stage only
 
     // for branches and jumps
     output reg [1:0] PIP_bnj_oper_o, // branch and jump operation type
@@ -45,8 +46,10 @@ module instruction_decode
     // these below are used are for the forwarding unit and WB stage
     output reg[4:0] PIP_rs1_o, // address of first register operand
     output reg[4:0] PIP_rs2_o, // address of second register operand
-    output reg[4:0] PIP_rd_o // address of destination register
+    output reg[4:0] PIP_rd_o, // address of destination register
 
+
+    output reg PIP_TRAP_o // for EBREAK or ECALL
     // *************************************************************
 );
 
@@ -99,14 +102,13 @@ reg [31:0] current_imm ; // is equal to one of the above according to the curren
 // decode opcodes
 // control signals
 reg is_imm ; // if = 1 then use immediate instead of rs2 else use rs2
-reg isBranch = 0; // if = 1 then the current instruction is a branch
 reg readMem = 0; // if = 1 we need to read from data memory
-reg memToReg = 0; //
 reg writeMem = 0;
 reg aluSrc = 0;
 reg writeReg = 0;
 reg wb_use_mem = 0; // use memory data out in to write back 
 reg [3:0] aluOper = 0;
+reg use_pc; // tell EX stage to use pc instead of rs1, used only for ALUIP
 
 
 // for jumps and branches
@@ -115,6 +117,10 @@ reg [1:0] bnj_oper;
 reg is_bnj;
 reg bnj_neg;
 
+// handle TRAPS , organize this later
+reg TRAP;
+always @(*)
+    TRAP = (instruction == 32'h00000073) || ( instruction == 32'h00100073)  ; // EBREAK or ECALL
 
 // decode
 always@(*)
@@ -128,6 +134,7 @@ begin
     bnj_oper = 0;
     is_bnj = 0;
     bnj_neg = 0;
+    use_pc = 0;
 
     case( opcode )
         `LUI: // load upper immediate
@@ -140,7 +147,9 @@ begin
         `AUIPC: 
         begin
             current_imm = imm_u;
-            $display("unimplemented instruction used");
+            writeReg = 1;
+            use_pc = 1;
+            is_imm = 1;
         end
 
         `BRANCH:
@@ -157,6 +166,7 @@ begin
             is_bnj = 1;
             writeReg = 1;
             bnj_oper = `BNJ_JAL;
+            is_imm = 1;
         end
 
         `JALR: // jump and link register
@@ -165,6 +175,7 @@ begin
             is_bnj = 1;
             writeReg = 1;
             bnj_oper = `BNJ_JALR;
+            is_imm = 1;
         end
 
         `LOAD:
@@ -192,9 +203,7 @@ begin
             current_imm = imm_i ;
             is_imm = 1;
             writeReg = 1;
-        end
-        default:
-            $display("unsupported instruction used! %d" , opcode );
+        end        
     endcase
 end
 
@@ -210,6 +219,8 @@ begin
         `LOAD:
             aluOper = `ALU_ADD;
         `STORE:
+            aluOper = `ALU_ADD;
+        `AUIPC:
             aluOper = `ALU_ADD;
         `BRANCH:
         begin
@@ -286,6 +297,7 @@ begin
         PIP_immediate_o <= 0;
         PIP_aluOper_o <= 0;
         PIP_use_imm_o <= 0;
+        PIP_use_pc_o <= 0 ;
 
         PIP_write_mem_o <= 0;
         PIP_read_mem_o <= 0;
@@ -297,6 +309,10 @@ begin
         PIP_bnj_oper_o <= 0; // branch and jump operation type
         PIP_is_bnj_o <= 0; // indicated whether this is a branch or jump
         PIP_bnj_neg_o <= 0;
+
+        // for TRAPS
+
+        PIP_TRAP_o <= 0 ;
     end
     else if ( !id_stall_i ) // update only in the case where there is no stall
     begin
@@ -310,6 +326,7 @@ begin
         PIP_immediate_o <= current_imm;
         PIP_aluOper_o <= aluOper;
         PIP_use_imm_o <= is_imm;
+        PIP_use_pc_o <= use_pc;
 
         PIP_write_mem_o <= writeMem;
         PIP_read_mem_o <= readMem;
@@ -321,6 +338,8 @@ begin
         PIP_bnj_oper_o <= bnj_oper;
         PIP_is_bnj_o <= is_bnj;
         PIP_bnj_neg_o <= bnj_neg ; 
+
+        PIP_TRAP_o <= TRAP;
     end
 end
 
