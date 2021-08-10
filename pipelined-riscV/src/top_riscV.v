@@ -45,6 +45,8 @@ wire ID_EX_write_mem;
 wire ID_EX_use_mem;
 wire ID_EX_write_reg;
 wire ID_EX_use_pc;
+wire ID_EX_use_zero;
+
 wire [4:0] ID_EX_rs1;
 wire [4:0] ID_EX_rs2;
 wire [4:0] ID_EX_rd;
@@ -140,6 +142,7 @@ instruction_decode inst_instruction_decode
     .PIP_aluOper_o(ID_EX_aluOper), // to determine what operation to use
     .PIP_use_imm_o(ID_EX_use_imm), // for execute stage only
     .PIP_use_pc_o(ID_EX_use_pc), // for execute stage only
+    .PIP_use_zero(ID_EX_use_zero), // use zero as rs1
 
 
     // for branches and jumps
@@ -181,7 +184,7 @@ execute inst_execute
     .PIP_aluOper_i(ID_EX_aluOper), // need to be decoded further
     .PIP_use_imm_i(ID_EX_use_imm), // use immediate as operand instead of rs2
     .PIP_use_pc_i(ID_EX_use_pc) , // use PC as first operand1 instread of rs1
-
+    .PIP_use_zero(ID_EX_use_zero), // use zero instead of rs1
     //for branches and jumps
 
     .PIP_bnj_oper_i(ID_EX_bnj_oper),

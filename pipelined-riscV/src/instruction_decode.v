@@ -27,6 +27,7 @@ module instruction_decode
     output reg [3:0] PIP_aluOper_o, // to determine what operation to use
     output reg PIP_use_imm_o, // for execute stage only
     output reg PIP_use_pc_o, // for execute stage only
+    output reg PIP_use_zero, // use zero as rs1
 
     // for branches and jumps
     output reg [1:0] PIP_bnj_oper_o, // branch and jump operation type
@@ -109,7 +110,7 @@ reg writeReg = 0;
 reg wb_use_mem = 0; // use memory data out in to write back 
 reg [3:0] aluOper = 0;
 reg use_pc; // tell EX stage to use pc instead of rs1, used only for ALUIP
-
+reg use_zero; // set rs1 to zero
 
 // for jumps and branches
 
@@ -135,6 +136,7 @@ begin
     is_bnj = 0;
     bnj_neg = 0;
     use_pc = 0;
+    use_zero = 0;
 
     case( opcode )
         `LUI: // load upper immediate
@@ -142,6 +144,7 @@ begin
             current_imm = imm_u;
             is_imm = 1;
             writeReg = 1;
+            use_zero = 1; // set rs1 to zero
         end
 
         `AUIPC: 
@@ -298,6 +301,7 @@ begin
         PIP_aluOper_o <= 0;
         PIP_use_imm_o <= 0;
         PIP_use_pc_o <= 0 ;
+        PIP_use_zero <= 0;
 
         PIP_write_mem_o <= 0;
         PIP_read_mem_o <= 0;
@@ -327,6 +331,7 @@ begin
         PIP_aluOper_o <= aluOper;
         PIP_use_imm_o <= is_imm;
         PIP_use_pc_o <= use_pc;
+        PIP_use_zero <= use_zero;
 
         PIP_write_mem_o <= writeMem;
         PIP_read_mem_o <= readMem;

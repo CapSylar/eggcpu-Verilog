@@ -15,6 +15,7 @@ module execute
     input wire [3:0] PIP_aluOper_i, // need to be decoded further
     input wire PIP_use_imm_i, // use immediate as operand instead of rs2
     input wire PIP_use_pc_i, // use PC as first operand1 instread of rs1
+    input wire PIP_use_zero, // use zero instead of rs1
 
     // for branches and jumps
 
@@ -109,7 +110,9 @@ reg [31:0] new_rs2;
 
 always @(*) // calculate operand1
 begin
-    if ( PIP_use_pc_i )
+    if ( PIP_use_zero ) // for LUI
+        operand1 = 0 ;
+    else if ( PIP_use_pc_i )
         operand1 = PIP_pc_i; // use pc as first operand, ALUIPC instruction
     else if ( use_EX_MEM_rs1_i )
         operand1 = EX_MEM_operand_i;
