@@ -34,22 +34,21 @@ module instruction_decode
     output reg PIP_is_bnj_o, // indicated whether this is a branch or jump
     output reg PIP_bnj_neg_o, // indicates wether to negate result from alu when evaluating if branch is taken or not
 
-    // below is used to induce a flush
+    // below is used to instroduce a flush
 
     // these below are for the Memory stage
-    output reg PIP_write_mem_o,
-    output reg PIP_read_mem_o,
+    output reg [4:0] PIP_memOper_o, // Word, Halfword or byte
 
     // these below are for the Write Back stage
     output reg PIP_use_mem_o,
-    output reg PIP_write_reg_o, 
+    output reg PIP_write_reg_o,
 
     // these below are used are for the forwarding unit and WB stage
     output reg[4:0] PIP_rs1_o, // address of first register operand
     output reg[4:0] PIP_rs2_o, // address of second register operand
     output reg[4:0] PIP_rd_o, // address of destination register
 
-
+    // for TRAPS
     output reg PIP_TRAP_o // for EBREAK or ECALL
     // *************************************************************
 );
@@ -71,7 +70,7 @@ reg_file inst_reg_file
     .clk(clk),
     .reset_n(reset_n),
 
-    //register file read interface
+    //register file ` interface
     .reg1_addr_i(rs1),
     .reg2_addr_i(rs2),
     .data1_o(regf_o1),
@@ -103,12 +102,11 @@ reg [31:0] current_imm ; // is equal to one of the above according to the curren
 // decode opcodes
 // control signals
 reg is_imm ; // if = 1 then use immediate instead of rs2 else use rs2
-reg readMem = 0; // if = 1 we need to read from data memory
-reg writeMem = 0;
-reg aluSrc = 0;
-reg writeReg = 0;
-reg wb_use_mem = 0; // use memory data out in to write back 
-reg [3:0] aluOper = 0;
+reg [4:0] memOper;
+reg aluSrc;
+reg writeReg;
+reg wb_use_mem; // use memory data out in to write back 
+reg [3:0] aluOper;
 reg use_pc; // tell EX stage to use pc instead of rs1, used only for ALUIP
 reg use_zero; // set rs1 to zero
 
@@ -129,14 +127,12 @@ begin
     is_imm = 0;
     current_imm = 0;
     writeReg = 0;
-    writeMem = 0;
     wb_use_mem = 0;
-    readMem = 0; 
     bnj_oper = 0;
     is_bnj = 0;
-    bnj_neg = 0;
     use_pc = 0;
     use_zero = 0;
+    memOper = 0;
 
     case( opcode )
         `LUI: // load upper immediate
@@ -186,14 +182,26 @@ begin
             current_imm = imm_i;
             is_imm = 1;
             writeReg = 1;
-            readMem = 1;
             wb_use_mem = 1;
+
+            case (func3)
+                3'b000: memOper = `MEM_LB;
+                3'b001: memOper = `MEM_LH;
+                3'b010: memOper = `MEM_LW;
+                3'b100: memOper = `MEM_LBU;
+                3'b101: memOper = `MEM_LHU;
+            endcase
         end
         `STORE:
         begin
             current_imm = imm_s;
             is_imm = 1;
-            writeMem = 1;
+
+            case ( func3 )
+                3'b000: memOper = `MEM_SB;
+                3'b001: memOper = `MEM_SH;
+                3'b010: memOper = `MEM_SW;
+            endcase
         end
 
         `ARITH:
@@ -216,6 +224,7 @@ end
 always@(*)
 begin
     aluOper = 0; // does not really matter
+    bnj_neg = 0;
 
     case ( opcode )
 
@@ -303,8 +312,7 @@ begin
         PIP_use_pc_o <= 0 ;
         PIP_use_zero <= 0;
 
-        PIP_write_mem_o <= 0;
-        PIP_read_mem_o <= 0;
+        PIP_memOper_o <= 0;
 
         PIP_use_mem_o <= 0;
         PIP_write_reg_o <= 0 ;
@@ -333,11 +341,9 @@ begin
         PIP_use_pc_o <= use_pc;
         PIP_use_zero <= use_zero;
 
-        PIP_write_mem_o <= writeMem;
-        PIP_read_mem_o <= readMem;
-
         PIP_use_mem_o <= wb_use_mem;
         PIP_write_reg_o <= writeReg;
+        PIP_memOper_o <= memOper;
 
         // branches and jumps
         PIP_bnj_oper_o <= bnj_oper;

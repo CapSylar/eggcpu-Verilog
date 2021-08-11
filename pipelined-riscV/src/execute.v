@@ -24,8 +24,7 @@ module execute
     input wire PIP_bnj_neg_i,
 
     // these below are for the Memory stage
-    input wire PIP_write_mem_i,
-    input wire PIP_read_mem_i,
+    input wire [4:0] PIP_memOper_i, // just forward
 
     // these below are for the Write Back stage
     input wire PIP_use_mem_i,
@@ -34,8 +33,7 @@ module execute
     // EX/MEM pipeline registers***************************
     
     // these below are for the Memory stage
-    output reg PIP_write_mem_o,
-    output reg PIP_read_mem_o,
+    output reg [4:0] PIP_memOper_o,
     output reg [31:0] PIP_alu_result_o,
     output reg [31:0] PIP_second_operand_o, // if data mem write is on, this will be written
 
@@ -69,8 +67,7 @@ always@( posedge clk )
 begin
     if ( !reset_n )
     begin
-        PIP_write_mem_o <= 0;
-        PIP_read_mem_o <= 0;
+        PIP_memOper_o <= 0;
         PIP_alu_result_o <= 0;
         PIP_second_operand_o <= 0;
 
@@ -83,8 +80,7 @@ begin
 
     else // just forward
     begin
-        PIP_write_mem_o <= PIP_write_mem_i;
-        PIP_read_mem_o <= PIP_read_mem_i;
+        PIP_memOper_o <= PIP_memOper_i;
         PIP_alu_result_o <= (PIP_is_bnj_i && PIP_bnj_oper_i[1]) ? PIP_pc_i+4 : alu_result; // if branch or jump and bypass is required forward pc+4 instead of alu_result
         PIP_second_operand_o <= new_rs2;
 
@@ -140,7 +136,7 @@ begin
         operand2 = new_rs2;
 end
 
-wire shift_amount = operand2[4:0];
+wire [4:0] shift_amount = operand2[4:0];
 
 always@(*)
 begin
@@ -175,7 +171,7 @@ begin
     `ALU_SLL:
         alu_result = operand1 << shift_amount;
     `ALU_SRA:
-        alu_result = operand1 >>> shift_amount; // converve sign bit
+        alu_result = $signed(operand1) >>> shift_amount; // converve sign bit
     `ALU_SRL:
         alu_result = operand1 >> shift_amount;
 

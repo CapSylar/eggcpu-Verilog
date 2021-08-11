@@ -30,3 +30,15 @@
 `define BNJ_JALR 2'b11
 `define BNJ_JAL 2'b10
 `define BNJ_BRANCH 2'b00
+
+// LOADS AND STORES KINDS MSB=STORE MSB-1=LOAD
+
+`define MEM_LB  5'b01000 // load byte 
+`define MEM_LBU 5'b01001// load byte unsigned
+`define MEM_LH  5'b01010// load half-word
+`define MEM_LHU 5'b01011// load half-word unsigned
+`define MEM_LW  5'b01100// load full word
+
+`define MEM_SB  5'b10000// store byte
+`define MEM_SH  5'b10001// store half-word
+`define MEM_SW  5'b10010// store full word

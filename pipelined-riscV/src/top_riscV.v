@@ -10,7 +10,7 @@ module top_riscV
 
     // Data memory interface
 
-    output wire DMEM_write_o,
+    output wire [3:0] DMEM_write_byte_o,
     output wire DMEM_read_o,
     input wire [31:0] DMEM_data_i,
     output wire [31:0] DMEM_addr_o,
@@ -40,8 +40,7 @@ wire [31:0] ID_EX_operand2;
 wire [31:0] ID_EX_immediate;
 wire [3:0] ID_EX_aluOper;
 wire ID_EX_use_imm;
-wire ID_EX_read_mem;
-wire ID_EX_write_mem;
+wire [4:0] ID_EX_memOper;
 wire ID_EX_use_mem;
 wire ID_EX_write_reg;
 wire ID_EX_use_pc;
@@ -60,16 +59,13 @@ wire ID_EX_TRAP;
 wire [31:0] EX_MEM_alu_result;
 wire [31:0] EX_MEM_second_op;
 wire [4:0] EX_MEM_rd;
-wire EX_MEM_read_mem;
-wire EX_MEM_write_mem;
+wire [4:0] EX_MEM_memOper;
 wire EX_MEM_use_mem;
 wire EX_MEM_write_reg;
 wire EX_MEM_TRAP;
 
-
 // MEM/WB pipeline registers**********
 wire [31:0] MEM_WB_alu_result;
-wire [4:0] MEM_WB_reg_addr;
 wire MEM_WB_write_reg;
 wire MEM_WB_use_mem;
 wire [31:0] MEM_WB_DMEM_data;
@@ -152,8 +148,7 @@ instruction_decode inst_instruction_decode
     .PIP_bnj_neg_o(ID_EX_bnj_neg), // indicates wether to negate result from alu when evaluating if branch is taken or not
 
     // these below are for the Memory stage
-    .PIP_write_mem_o(ID_EX_write_mem),
-    .PIP_read_mem_o(ID_EX_read_mem),
+    .PIP_memOper_o(ID_EX_memOper),
 
     // these below are for the Write Back stage
     .PIP_use_mem_o(ID_EX_use_mem),
@@ -192,8 +187,7 @@ execute inst_execute
     .PIP_bnj_neg_i(ID_EX_bnj_neg),
 
     // these below are for the Memory stage
-    .PIP_write_mem_i(ID_EX_write_mem),
-    .PIP_read_mem_i(ID_EX_read_mem),
+    .PIP_memOper_i(ID_EX_memOper),
 
     // these below are for the Write Back stage
     .PIP_use_mem_i(ID_EX_use_mem),
@@ -202,8 +196,7 @@ execute inst_execute
     // EX/MEM pipeline registers***************************
     
     // these below are for the Memory stage
-    .PIP_write_mem_o(EX_MEM_write_mem),
-    .PIP_read_mem_o(EX_MEM_read_mem),
+    .PIP_memOper_o(EX_MEM_memOper),
     .PIP_alu_result_o(EX_MEM_alu_result),
     .PIP_second_operand_o(EX_MEM_second_op), // if data mem write is on, this will be written
 
@@ -243,15 +236,14 @@ memory_rw inst_memory_rw
     .DMEM_addr_o(DMEM_addr_o),
     .DMEM_data_o(DMEM_data_o),
     .DMEM_read_o(DMEM_read_o),
-    .DMEM_write_o(DMEM_write_o),
+    .DMEM_write_byte_o(DMEM_write_byte_o),
     .DMEM_data_i(DMEM_data_i),    
 
     // from EX/MEM Pipeline registers ****************
-    .PIP_second_operand_i(EX_MEM_second_op),
+    .PIP_write_data_i(EX_MEM_second_op),
     .PIP_alu_result_i(EX_MEM_alu_result),
     .PIP_rd_i(EX_MEM_rd),
-    .PIP_read_mem_i(EX_MEM_read_mem),
-    .PIP_write_mem_i(EX_MEM_write_mem),
+    .PIP_memOper_i(EX_MEM_memOper),
 
     // for WB stage
     .PIP_use_mem_i(EX_MEM_use_mem),
@@ -336,7 +328,7 @@ hazard inst_hazard
     .ID_EX_flush_o(hzrd_ID_EX_flush),
 
     // ID/EX pipeline inputs
-    .ID_EX_read_mem_i(ID_EX_read_mem),
+    .ID_EX_read_mem_i(ID_EX_memOper[3]), // if MSB-1 is set then we have a load
     .ID_EX_rd_i(ID_EX_rd),
 
     // directly from back of ID

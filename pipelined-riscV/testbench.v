@@ -54,17 +54,15 @@ module tb_top_riscV
 `define S_SH     34
 `define S_SW     35
 
-
 // TESTBENCH PARAMETERS
 parameter TEST_MEMORY_WIDTH = 13 ;
-parameter SINGLE_TEST = `RR_SLL; 
+parameter SINGLE_TEST = `S_SB; 
 parameter TEST_TIME_MAX_TICKS = 100000;
 parameter START_INDEX = `RR_ADD ;
-parameter END_INDEX = `J_JALR ;
+parameter END_INDEX = `S_SW ;
 
 
 // Internal definitions *****
-
 reg clk = 0 ;
 reg reset_n = 1;
 localparam CLK_PERIOD = 10;
@@ -76,7 +74,7 @@ reg [31:0] DMEM_data_i = 0 ;
 wire [31:0] DMEM_addr_o ;
 wire [31:0]  DMEM_data_o ;
 
-wire DMEM_write_o ;
+wire [3:0] DMEM_byte_en ;
 wire DMEM_read_o ;
 wire TRAP;
 
@@ -91,7 +89,7 @@ top_riscV uut
     .IMEM_addr_o(IMEM_addr_o),
     .IMEM_data_i(IMEM_data_i),
     .IMEM_read_n_o(IMEM_read_n_o),
-    .DMEM_write_o(DMEM_write_o),
+    .DMEM_write_byte_o(DMEM_byte_en),
     .DMEM_read_o(DMEM_read_o),
     .DMEM_data_i(DMEM_data_i),
     .DMEM_addr_o(DMEM_addr_o),
@@ -107,6 +105,8 @@ reg [31:0] ram [0:2**TEST_MEMORY_WIDTH-1];
 initial begin
 end
 
+wire [31:0] DMEM_addr = DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2;
+wire [31:0] IMEM_addr = IMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2;
 // essentially a two port ram module
 always@( posedge clk )
 begin
@@ -118,12 +118,19 @@ begin
     else
     begin
         if ( !IMEM_read_n_o )
-            IMEM_data_i <= ram[IMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ];
+            IMEM_data_i <= ram[IMEM_addr];
 
-        if ( DMEM_write_o ) // write to ram 
-            ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ] <= DMEM_data_o;
-        else if ( DMEM_read_o ) // read from ram
-            DMEM_data_i <= ram[DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2 ]; 
+        if (DMEM_byte_en[0])
+            ram[DMEM_addr][7:0] <= DMEM_data_o[7:0];
+        if ( DMEM_byte_en[1] )
+            ram[DMEM_addr][15:8] <= DMEM_data_o[15:8];
+        if (DMEM_byte_en[2])
+            ram[DMEM_addr][23:16] <= DMEM_data_o[23:16];
+        if ( DMEM_byte_en[3] )
+            ram[DMEM_addr][31:24] <= DMEM_data_o[31:24];
+
+        if( DMEM_read_o ) // read from ram
+            DMEM_data_i <= ram[DMEM_addr]; 
     end
 end
 
@@ -179,6 +186,20 @@ task load_test;
             `J_JAL: $readmemh( "testing/build-files/jal.S.hex" , ram );
             `J_JALR: $readmemh( "testing/build-files/jalr.S.hex" , ram );
 
+            //************  Load instructions
+
+           `L_LB:  $readmemh( "testing/build-files/lb.S.hex" , ram );
+           `L_LH:  $readmemh( "testing/build-files/lh.S.hex" , ram );
+           `L_LW:  $readmemh( "testing/build-files/lw.S.hex" , ram );
+           `L_LBU: $readmemh( "testing/build-files/lbu.S.hex" , ram );
+           `L_LHU: $readmemh( "testing/build-files/lhu.S.hex" , ram );
+
+            //************ Store instructions
+
+            `S_SB:$readmemh( "testing/build-files/sb.S.hex" , ram );
+            `S_SH:$readmemh( "testing/build-files/sh.S.hex" , ram );
+            `S_SW:$readmemh( "testing/build-files/sw.S.hex" , ram );
+
         endcase
 
         $display("Loading testfile with ID => %0d ", index );
@@ -205,6 +226,7 @@ task eval_result;
                 begin
                     result = 1; // test passed
                     $display("[TEST PASSED] => TEST-ID : %0d" , index );
+                    $display("Program Counter stopped at => %0x " , uut.IF_ID_pc );
                     t = TEST_TIME_MAX_TICKS;     // stop
                 end
                 else if ( TRAP )
