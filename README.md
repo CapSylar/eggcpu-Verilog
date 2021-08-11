@@ -1,5 +1,7 @@
 
+<p align="center">
 <img src= pictures/eggcpu.png>
+</p>
 
 # eggcpu
 
