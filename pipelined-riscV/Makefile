@@ -19,6 +19,11 @@ testbench.vvp: testbench.v $(SRC_MODULES)
 		$(SRC_MODULES)  -I src
 	@echo "************************"
 
+runall: testbench.vvp
+	@echo "running simulation on all tests"
+	vvp $< +runall
+	@echo "************************"
+
 .PHONY: clean
 
 clean:
