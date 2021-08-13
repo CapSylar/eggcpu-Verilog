@@ -61,37 +61,6 @@ module execute
     output reg PIP_TRAP_o
 );
 
-// forward pipeline registers
-
-always@( posedge clk )
-begin
-    if ( !reset_n )
-    begin
-        PIP_memOper_o <= 0;
-        PIP_alu_result_o <= 0;
-        PIP_second_operand_o <= 0;
-
-        PIP_use_mem_o <= 0;
-        PIP_write_reg_o <= 0;
-        PIP_rd_o <= 0 ;
-
-        PIP_TRAP_o <= 0;
-    end
-
-    else // just forward
-    begin
-        PIP_memOper_o <= PIP_memOper_i;
-        PIP_alu_result_o <= (PIP_is_bnj_i && PIP_bnj_oper_i[1]) ? PIP_pc_i+4 : alu_result; // if branch or jump and bypass is required forward pc+4 instead of alu_result
-        PIP_second_operand_o <= new_rs2;
-
-        PIP_use_mem_o <= PIP_use_mem_i;
-        PIP_write_reg_o <= PIP_write_reg_i;
-        PIP_rd_o <= PIP_rd_i;
-
-        PIP_TRAP_o <= PIP_TRAP_i;
-    end
-end
-
 // determine what operation we need to do
 
 reg [31:0] alu_result;
@@ -189,6 +158,40 @@ begin
     else // else 0 pc relative , add immediate to PC
         PC_target_address_o = PIP_pc_i + PIP_immediate_i;
 end
+
+
+
+
+// forward pipeline registers
+always@( posedge clk )
+begin
+    if ( !reset_n )
+    begin
+        PIP_memOper_o <= 0;
+        PIP_alu_result_o <= 0;
+        PIP_second_operand_o <= 0;
+
+        PIP_use_mem_o <= 0;
+        PIP_write_reg_o <= 0;
+        PIP_rd_o <= 0 ;
+
+        PIP_TRAP_o <= 0;
+    end
+
+    else // just forward
+    begin
+        PIP_memOper_o <= PIP_memOper_i;
+        PIP_alu_result_o <= (PIP_is_bnj_i && PIP_bnj_oper_i[1]) ? PIP_pc_i+4 : alu_result; // if branch or jump and bypass is required forward pc+4 instead of alu_result
+        PIP_second_operand_o <= new_rs2;
+
+        PIP_use_mem_o <= PIP_use_mem_i;
+        PIP_write_reg_o <= PIP_write_reg_i;
+        PIP_rd_o <= PIP_rd_i;
+
+        PIP_TRAP_o <= PIP_TRAP_i;
+    end
+end
+
 
 
 

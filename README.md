@@ -81,8 +81,13 @@ To run the all the Tests do `make runall`. For single testing edit the `SINGLE_T
 - Implement caches ( Instruction and Data Cache )
 
 ## Evaluation: Timing and Utilization on Xilinx ARTIX-7
+All measures were done using Xilinx's `Vivado 2020.1` tool.
 
-- TODO
+The table below features  compilations of the `LUT` and `BRAM` utilizations along with the maximum frequency that `eggpu` can run one the `Artix-7 XC7A35T`. I also recorded what improvements have been made along the way to get faster clock speeds and hopefully lower resource use.
+
+Attempt | Slice LUTs | Slice Registers | BRAM Tiles | Clock period (frequency) | 
+---- | ---- | ----- | ----- | ---- |
+1(bad!)    |  1523 | 1341 |  4 | 16ns (62.5Mhz)
 
 
 ## Benchmark ( using Coremark )

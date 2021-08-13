@@ -23,10 +23,11 @@ module instruction_fetch
     input wire [31:0] PIP_target_address_i // address to jump to
 );
 
+reg [31:0] current_pc , next_pc;
+
 assign IMEM_read_n_o = stall_if_i; // do not read on the next cycle, keep IMEM_data_o the same
 assign IMEM_addr_o = current_pc;
 // next program counter
-reg [31:0] current_pc , next_pc;
 
 // logic to compute next address to fetch from
 //TODO: what happends if stall and load at the same time ???? 
