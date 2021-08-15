@@ -9,11 +9,12 @@ module eggSoC
 wire TRAP;
 assign led[0] = TRAP;
 
+reg [31:0] DMEM_data_i = 0 ;
+reg [31:0] IMEM_data_i = 0 ;
+
 wire reset_n = !btnC; 
 wire [31:0] IMEM_addr_o ;
-reg [31:0] IMEM_data_i = 0 ;
 wire IMEM_read_n_o;
-reg [31:0] DMEM_data_i = 0 ;
 wire [31:0] DMEM_addr_o ;
 wire [31:0]  DMEM_data_o ;
 
@@ -22,43 +23,68 @@ wire DMEM_read_o ;
 
 parameter TEST_MEMORY_WIDTH = 12 ;
 
-
 // Instruction and Data mmemory
-reg [31:0] ram [0:2**TEST_MEMORY_WIDTH-1];
+reg [31:0] data_ram [0:2<<TEST_MEMORY_WIDTH-1];
+reg [31:0] instr_ram [0:2<<TEST_MEMORY_WIDTH-1];
 
 initial
 begin
-    $readmemh( "/home/robin/Desktop/eggcpu/pipelined-riscV/testing/build-files/add.S.hex" , ram );
+    $readmemh( "/home/robin/Desktop/eggcpu/pipelined-riscV/testing/build-files/add.S.hex" , data_ram );
+    $readmemh( "/home/robin/Desktop/eggcpu/pipelined-riscV/testing/build-files/add.S.hex" , instr_ram );
 end
 
 wire [31:0] DMEM_addr = DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2;
 wire [31:0] IMEM_addr = IMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2;
-// essentially a two port ram module
-always@( posedge clk )
+
+
+always@(posedge clk)
 begin
     if ( !reset_n )
     begin
         IMEM_data_i <= 0;
+    end
+    else
+    begin
+        if ( !IMEM_read_n_o ) // read instruction from ram
+            IMEM_data_i <= instr_ram[IMEM_addr];
+    end
+end
+
+
+always@(posedge clk)
+begin
+    if (!reset_n)
+    begin
         DMEM_data_i <= 0 ;
     end
     else
     begin
-        if ( !IMEM_read_n_o )
-            IMEM_data_i <= ram[IMEM_addr];
+        if( DMEM_read_o ) // read data from ram
+            DMEM_data_i <= data_ram[DMEM_addr]; 
 
         if (DMEM_byte_en[0])
-            ram[DMEM_addr][7:0] <= DMEM_data_o[7:0];
+            data_ram[DMEM_addr][7:0] <= DMEM_data_o[7:0];
         if ( DMEM_byte_en[1] )
-            ram[DMEM_addr][15:8] <= DMEM_data_o[15:8];
+            data_ram[DMEM_addr][15:8] <= DMEM_data_o[15:8];
         if (DMEM_byte_en[2])
-            ram[DMEM_addr][23:16] <= DMEM_data_o[23:16];
+            data_ram[DMEM_addr][23:16] <= DMEM_data_o[23:16];
         if ( DMEM_byte_en[3] )
-            ram[DMEM_addr][31:24] <= DMEM_data_o[31:24];
-
-        if( DMEM_read_o ) // read from ram
-            DMEM_data_i <= ram[DMEM_addr]; 
+            data_ram[DMEM_addr][31:24] <= DMEM_data_o[31:24];
     end
 end
+
+
+// // essentially a two port ram module
+// always@( posedge clk )
+// begin
+//     if ( !reset_n )
+//     begin
+//         IMEM_data_i <= 0;
+//     end
+//     else
+//     begin
+//     end
+// end
     
 top_riscV eggcpu
 (

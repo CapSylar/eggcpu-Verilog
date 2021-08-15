@@ -102,9 +102,6 @@ top_riscV uut
 // Instruction and Data mmemory
 reg [31:0] ram [0:2**TEST_MEMORY_WIDTH-1];
 
-initial begin
-end
-
 wire [31:0] DMEM_addr = DMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2;
 wire [31:0] IMEM_addr = IMEM_addr_o[TEST_MEMORY_WIDTH-1:0] >> 2;
 // essentially a two port ram module

@@ -125,17 +125,17 @@ begin
     `ALU_SLT:
         begin
             if ( $signed(operand1) < $signed(operand2) )
-                alu_result = 1;
+                alu_result[0] = 1;
         end
     `ALU_SLTU:
         begin
             if ( operand1 < operand2 )
-                 alu_result = 1;
+                 alu_result[0] = 1;
         end
     `ALU_SEQ:
         begin
             if ( operand1 == operand2 )
-                alu_result = 1;
+                alu_result[0] = 1;
         end
     `ALU_SLL:
         alu_result = operand1 << shift_amount;
@@ -149,7 +149,7 @@ end
 
 // branch or jump handling
 // if it needs a bypass then its a jump instruction thus load unconditionally
-assign PC_load_target_o = PIP_is_bnj_i && (PIP_bnj_oper_i[1] || ( alu_result && !PIP_bnj_neg_i ) || ( !alu_result && PIP_bnj_neg_i )) ;
+assign PC_load_target_o = PIP_is_bnj_i && (PIP_bnj_oper_i[1] || ( alu_result[0] && !PIP_bnj_neg_i ) || ( !alu_result[0] && PIP_bnj_neg_i )) ;
 
 always@(*)
 begin

@@ -28,29 +28,37 @@ assign data1_o = data1; // assign these to the output
 assign data2_o = data2;
 
 // reading from register file
+// always@(*)
+// begin
+//     // read to data_o1
+//     if ( is_write && writereg_addr_i == reg1_addr_i ) // forward result form WB
+//         data1 = data_i;
+//     else
+//         data1 = registerFile[reg1_addr_i]; // read normally
+
+//     // read to data_o2
+//     if ( is_write && writereg_addr_i == reg2_addr_i ) // forward result form WB
+//         data2 = data_i;
+//     else
+//         data2 = registerFile[reg2_addr_i]; // read normally   
+// end
+
+
+// read from register file
 always@(*)
 begin
-    // read to data_o1
-    if ( is_write && writereg_addr_i == reg1_addr_i ) // forward result form WB
-        data1 = data_i;
-    else
-        data1 = registerFile[reg1_addr_i]; // read normally
-
-    // read to data_o2
-    if ( is_write && writereg_addr_i == reg2_addr_i ) // forward result form WB
-        data2 = data_i;
-    else
-        data2 = registerFile[reg2_addr_i]; // read normally   
+    data1 = registerFile[reg1_addr_i];
+    data2 = registerFile[reg2_addr_i];
 end
 
 
 // writing to register file
 integer  i;
-always @( posedge clk )
+always @( negedge clk ) // write at falling edge, read at rising
 begin
-    if ( !reset_n )
+    if ( !reset_n ) //  TODO: consider removing this, save LUTs
     begin
-        for ( i = 0 ; i < 2**address_width ; i=i+1)
+        for ( i = 0 ; i < 2**address_width ; i = i + 1  )
         begin
             registerFile[i] <= 0;
         end
