@@ -1,6 +1,6 @@
 
 <p align="center">
-<img src= pictures/eggcpu.png>
+<img src= pictures/eggcpu-logo.svg>
 </p>
 
 # eggcpu
